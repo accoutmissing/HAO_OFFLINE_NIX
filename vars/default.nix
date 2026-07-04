@@ -42,8 +42,9 @@ in
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO23SY/1mwLZK75D6WBGK2Em1/aVl4T9Puwgm1VlVKxz"
   ];
 
-  # ── EasyTier 密钥（来自 gitignored secrets.nix） ──
-  inherit (secrets) easytierNetworkSecret easytierPeers;
+  # ── EasyTier 密钥（来自 gitignored secrets.nix，缺失时用空值降级） ──
+  easytierNetworkSecret = secrets.easytierNetworkSecret or null;
+  easytierPeers = secrets.easytierPeers or [ ];
 
   # ── Nix 缓存（供 flake.nix nixConfig 与 base/nix.nix 引用） ──
   inherit cachixSubstituters cachixTrustedPublicKeys;
