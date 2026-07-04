@@ -119,13 +119,13 @@ sudo nixos-rebuild switch --flake /etc/nixos#HAO_OFFLINE
 >
 > git 装好后用以下方式获取仓库：
 >
-> - **在线克隆**：`nix-shell -p git --run "git clone https://github.com/accoutmissing/nixos.git /mnt/etc/nixos"`
+> - **在线克隆**：`nix-shell -p git --run "git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos"`
 > - **离线搬运**：网络不行的话，把仓库拷到 U 盘，在 ISO 里 `cp -r /mnt/usb/nixos /mnt/etc/nixos`
 
 ### 台式机 HAO_DESKTOP — 单系统（两步安装）
 
 ```bash
-# 用本地路径替代 github:accoutmissing/nixos（假设仓库在 /mnt/etc/nixos）
+# 用本地路径替代 github:accoutmissing/HAO_OFFLINE_NIX（假设仓库在 /mnt/etc/nixos）
 sudo nix --extra-experimental-features 'nix-command flakes' run \
   /mnt/etc/nixos#disko -- --mode disko \
   /mnt/etc/nixos/hosts/HAO_DESKTOP/disko-config.nix
@@ -167,7 +167,7 @@ sudo nixos-generate-config --root /mnt
 # 如果用的是 EFI 分区（通常是 /dev/nvme0n1p1），后续部署时参考
 
 # 7. clone + 安装（ISO 默认无 git，需先装）
-nix-shell -p git --run "git clone https://github.com/accoutmissing/nixos.git /mnt/etc/nixos"
+nix-shell -p git --run "git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos"
 sudo nixos-install --flake /mnt/etc/nixos#HAO_DESKTOP
 ```
 
@@ -186,7 +186,7 @@ sudo nixos-install --flake /mnt/etc/nixos#HAO_DESKTOP
 sudo nixos-generate-config --root /mnt
 
 # 3. clone 仓库 + 复制硬件配置
-nix-shell -p git --run "git clone https://github.com/accoutmissing/nixos.git /mnt/etc/nixos"
+nix-shell -p git --run "git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos"
 sudo cp /mnt/etc/nixos/hardware-configuration.nix /mnt/etc/nixos/hosts/HAO_OFFLINE/
 
 # 4. 从本地路径安装
@@ -231,7 +231,7 @@ sudo mount /dev/sda1 /mnt/boot
 sudo nixos-generate-config --root /mnt
 
 # ISO 默认不含 git，用 nix-shell 临时装 git 来克隆仓库
-nix-shell -p git --run "git clone https://github.com/accoutmissing/nixos.git /mnt/etc/nixos"
+nix-shell -p git --run "git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos"
 sudo nixos-install --flake /mnt/etc/nixos#HAO_HYPERV
 ```
 
