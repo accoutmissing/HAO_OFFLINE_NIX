@@ -1,0 +1,20 @@
+# Nix build artifacts
+result
+result-*
+
+# Editor
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+secrets/
+*.age
+vars/secrets.nix
+
+# 硬件配置（笔记本安装时生成，不跟踪）
+hosts/HAO_OFFLINE/hardware-configuration.nix
