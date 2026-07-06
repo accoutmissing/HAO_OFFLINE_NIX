@@ -23,9 +23,6 @@ in
       ];
     };
 
-    # ── PipeWire 低延迟 ────────────────────────────────────────────────
-    services.pipewire.lowLatency.enable = true;
-
     # ── GameMode（系统级游戏性能优化） ─────────────────────────────────
     programs.gamemode.enable = true;
 
