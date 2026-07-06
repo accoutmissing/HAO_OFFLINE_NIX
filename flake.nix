@@ -92,7 +92,7 @@
       };
 
       # ── 安装工具（可在 U 盘环境直接运行） ───────────────────────────
-      # 用法：sudo nix run github:accoutmissing/nixos#disko -- --mode disko <配置>
+      # 用法：sudo nix run github:accoutmissing/HAO_OFFLINE_NIX#disko -- --mode disko <配置>
       packages.${system}.disko = disko.packages.${system}.disko;
     };
 

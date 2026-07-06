@@ -79,8 +79,8 @@ ping -c 3 nixos.org
 ### 第一步：分区（一条命令）
 
 ```bash
-sudo nix run github:accoutmissing/nixos#disko -- --mode disko \
-  https://raw.githubusercontent.com/accoutmissing/nixos/main/hosts/HAO_DESKTOP/disko-config.nix
+sudo nix run github:accoutmissing/HAO_OFFLINE_NIX#disko -- --mode disko \
+  https://raw.githubusercontent.com/accoutmissing/HAO_OFFLINE_NIX/main/hosts/HAO_DESKTOP/disko-config.nix
 ```
 
 **这条命令干了什么：**
@@ -101,7 +101,7 @@ sudo nix run github:accoutmissing/nixos#disko -- --mode disko \
 ### 第二步：安装系统
 
 ```bash
-sudo nixos-install --flake github:accoutmissing/nixos#HAO_DESKTOP
+sudo nixos-install --flake github:accoutmissing/HAO_OFFLINE_NIX#HAO_DESKTOP
 ```
 
 **这条命令干了什么：**
@@ -203,7 +203,7 @@ sudo mount -o subvol=@home,compress=zstd,noatime /dev/nvme0n1p3 /mnt/home
 
 ```bash
 # 克隆仓库到安装目标
-sudo git clone https://github.com/accoutmissing/nixos.git /mnt/etc/nixos
+sudo git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos
 
 # 安装（用本地路径，因为 disk 方式可能因为双系统 EFI 分区 label 不同而失败）
 sudo nixos-install --flake /mnt/etc/nixos#HAO_DESKTOP
@@ -283,7 +283,7 @@ sudo nixos-generate-config --root /mnt
 
 ```bash
 # 克隆仓库
-sudo git clone https://github.com/accoutmissing/nixos.git /mnt/etc/nixos
+sudo git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos
 
 # 把刚刚生成的硬件配置复制到笔记本的 host 目录
 sudo cp /mnt/etc/nixos/hardware-configuration.nix /mnt/etc/nixos/hosts/HAO_OFFLINE/
@@ -343,7 +343,7 @@ sudo mount /dev/sda1 /mnt/boot
 sudo nixos-generate-config --root /mnt
 
 # 装 git + 克隆仓库
-nix-shell -p git --run "git clone https://github.com/accoutmissing/nixos.git /mnt/etc/nixos"
+nix-shell -p git --run "git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos"
 
 # 安装
 sudo nixos-install --flake /mnt/etc/nixos#HAO_HYPERV
@@ -426,7 +426,7 @@ sudo nixos-rebuild switch --flake .#HAO_DESKTOP --rollback
 sudo nix-collect-garbage --delete-older-than 7d
 ```
 
-> **`/etc/nixos#` 和 `github:accoutmissing/nixos#` 有什么区别？**
+> **`/etc/nixos#` 和 `github:accoutmissing/HAO_OFFLINE_NIX#` 有什么区别？**
 > - `/etc/nixos#`：用本地仓库（装好系统后，仓库在 `/etc/nixos`）
 > - `github:...`：从 GitHub 远程拉（U 盘安装时用）
 
