@@ -4,11 +4,6 @@ let
   cfg = config.modules.desktop.gaming;
 in
 {
-  imports = [
-    nix-gaming.nixosModules.pipewireLowLatency
-    nix-gaming.nixosModules.platformOptimizations
-  ];
-
   options.modules.desktop = {
     gaming = {
       enable = mkEnableOption "游戏套件（Steam, Lutris, 游戏优化）";
@@ -16,6 +11,11 @@ in
   };
 
   config = mkIf cfg.enable {
+    imports = [
+      nix-gaming.nixosModules.pipewireLowLatency
+      nix-gaming.nixosModules.platformOptimizations
+    ];
+
     # ── Steam（Proton 运行 AAA 游戏） ──────────────────────────────────
     programs.steam = {
       enable = true;
