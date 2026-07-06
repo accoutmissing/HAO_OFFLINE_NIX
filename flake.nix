@@ -79,6 +79,7 @@
         };
     in
     {
+      # ── 系统配置 ──────────────────────────────────────────────────────
       nixosConfigurations = {
         # 笔记本：Intel i7-8750H + GTX 1060 Optimus
         HAO_OFFLINE = mkSystem "HAO_OFFLINE" [ ];
@@ -89,6 +90,10 @@
         # Hyper-V 虚拟机测试（无 GPU，软件渲染）
         HAO_HYPERV = mkSystem "HAO_HYPERV" [ ];
       };
+
+      # ── 安装工具（可在 U 盘环境直接运行） ───────────────────────────
+      # 用法：sudo nix run github:accoutmissing/nixos#disko -- --mode disko <配置>
+      packages.${system}.disko = disko.packages.${system}.disko;
     };
 
   # ── Nix 配置（对 flake 命令生效，系统级见 base/nix.nix） ──────
