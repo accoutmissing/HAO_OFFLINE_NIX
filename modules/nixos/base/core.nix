@@ -1,6 +1,9 @@
 { lib, ... }:
 {
-  # systemd-boot 配置（用 mkDefault 允许 host 层覆盖，如切换 GRUB）
+  # ── 系统版本（固定避免 nixpkgs-unstable 推进时意外切换） ─────────
+  system.stateVersion = lib.mkDefault "25.05";
+
+  # ── systemd-boot 配置（用 mkDefault 允许 host 层覆盖，如切换 GRUB） ──
   boot.loader.systemd-boot = {
     enable = lib.mkDefault true;
     configurationLimit = lib.mkDefault 10;

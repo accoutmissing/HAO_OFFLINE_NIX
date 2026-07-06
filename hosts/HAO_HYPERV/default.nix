@@ -10,10 +10,11 @@
 
 { lib, pkgs, ... }:
 
+let
+  hasHardwareConfig = builtins.pathExists ./hardware-configuration.nix;
+in
 {
-  imports = [
-    # VM 不需要 disko 分区，用 nixos-generate-config 生成 hardware-config
-  ];
+  imports = lib.optionals hasHardwareConfig [ ./hardware-configuration.nix ];
 
   # ── 主机身份 ──────────────────────────────────────────────────────
   networking.hostName = "HAO_HYPERV";

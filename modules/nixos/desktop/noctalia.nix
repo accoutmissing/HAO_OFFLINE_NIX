@@ -117,7 +117,7 @@ in
           };
 
           # 性能模式：笔记本省电，台式机全开
-          # 各主机 default.nix 中通过 modules.desktop.noctalia.performanceMode 覆盖
+          # 通过 hosts/<hostname>/default.nix 直接覆盖 home-manager 的 settings
           noctaliaPerformance = {
             disableWallpaper = lib.mkDefault false;
             disableDesktopWidgets = lib.mkDefault false;
