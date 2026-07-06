@@ -20,57 +20,27 @@ in
     # ── Noctalia 依赖的服务 ─────────────────────────────────────────────
     services.upower.enable = true;
 
-    # ── Niri 集成（开机自启 + 快捷键 + 空闲锁屏） ────────────────────
-    programs.niri.settings = {
-      spawn-at-startup = [
-        { command = [ "noctalia-shell" ]; }
-        # 空闲 5 分钟后锁屏
-        {
-          command = [
-            "swayidle" "-w"
-            "timeout" "300" "noctalia-shell ipc call lockScreen lock"
-            "before-sleep" "noctalia-shell ipc call lockScreen lock"
-          ];
-        }
-      ];
-
-      binds = {
-        # 启动器
-        "Mod+Space".action.spawn = [
-          "noctalia-shell" "ipc" "call" "launcher" "toggle"
-        ];
-
-        # 锁屏
-        "Mod+L".action.spawn = [
-          "noctalia-shell" "ipc" "call" "lockScreen" "lock"
-        ];
-
-        # 音量
-        "XF86AudioLowerVolume".action.spawn = [
-          "noctalia-shell" "ipc" "call" "volume" "decrease"
-        ];
-        "XF86AudioRaiseVolume".action.spawn = [
-          "noctalia-shell" "ipc" "call" "volume" "increase"
-        ];
-        "XF86AudioMute".action.spawn = [
-          "noctalia-shell" "ipc" "call" "volume" "muteOutput"
-        ];
-
-        # 亮度
-        "XF86MonBrightnessDown".action.spawn = [
-          "noctalia-shell" "ipc" "call" "brightness" "decrease"
-        ];
-        "XF86MonBrightnessUp".action.spawn = [
-          "noctalia-shell" "ipc" "call" "brightness" "increase"
-        ];
-      };
-    };
-
     # ── Home Manager 集成 ────────────────────────────────────────────────
     home-manager.users.${myvars.username} = {
       imports = [
         inputs.noctalia.homeModules.default
       ];
+
+      # ── Niri 配置（直接写 KDL，兼容不支持 programs.niri.settings 的版本）
+      xdg.configFile."niri/config.kdl".text = ''
+        spawn-at-startup "noctalia-shell"
+        spawn-at-startup "swayidle" "-w" "timeout" "300" "noctalia-shell ipc call lockScreen lock" "before-sleep" "noctalia-shell ipc call lockScreen lock"
+
+        binds {
+          Mod+Space { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
+          Mod+L { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
+          XF86AudioLowerVolume { spawn "noctalia-shell" "ipc" "call" "volume" "decrease"; }
+          XF86AudioRaiseVolume { spawn "noctalia-shell" "ipc" "call" "volume" "increase"; }
+          XF86AudioMute { spawn "noctalia-shell" "ipc" "call" "volume" "muteOutput"; }
+          XF86MonBrightnessDown { spawn "noctalia-shell" "ipc" "call" "brightness" "decrease"; }
+          XF86MonBrightnessUp { spawn "noctalia-shell" "ipc" "call" "brightness" "increase"; }
+        }
+      '';
 
       programs.noctalia-shell = {
         enable = true;
