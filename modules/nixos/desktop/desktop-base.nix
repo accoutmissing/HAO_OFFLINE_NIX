@@ -1,10 +1,7 @@
 { config, lib, pkgs, ... }:
 {
-  # ── Display Manager（greetd + ReGreet 图形登录） ───────────────
-  # ReGreet: GTK4 + Rust 的 Wayland 原生图形登录界面
-  # 自动处理 greeter 命令和 PAM，我们补上显式 enable + restart 微调
+  # ── Display Manager（greetd 图形登录） ────────────────────────────
   services.greetd.enable = lib.mkDefault true;
-  programs.regreet.enable = true;
   services.greetd.restart = false;
 
   # greeter 用户需要 video 组权限才能访问 GPU
@@ -58,16 +55,12 @@
 
   # ── 蓝牙 ────────────────────────────────────────────────────────────
   hardware.bluetooth.enable = true;
-  services.blueman.enable = true;
 
   # ── 打印 ────────────────────────────────────────────────────────────
   services.printing.enable = true;
 
   # ── 电源管理 ────────────────────────────────────────────────────────
   powerManagement.enable = true;
-
-  # Linux 内核 CPU 频率调度（台式机 + 笔记本通用）
-  services.power-profiles-daemon.enable = true;
 
   # ── 硬件维护 ────────────────────────────────────────────────────────
   services.fstrim.enable = true;    # NVMe SSD 定期 TRIM

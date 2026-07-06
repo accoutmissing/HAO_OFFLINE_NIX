@@ -18,12 +18,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # 游戏优化
-    nix-gaming = {
-      url = "github:fufexan/nix-gaming/25efde5";  # 2026-03-17
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # 桌面壳层（bar、dock、通知、锁屏、启动器）
     noctalia = {
       url = "github:noctalia-dev/noctalia/legacy-v4";
@@ -33,7 +27,7 @@
 
   # ── 输出 ────────────────────────────────────────────────────────────
   outputs =
-    { self, nixpkgs, home-manager, disko, nix-gaming, noctalia, ... }@inputs:
+    { self, nixpkgs, home-manager, disko, noctalia, ... }@inputs:
     let
       system = "x86_64-linux";
       lib = nixpkgs.lib;
@@ -103,13 +97,11 @@
       "https://mirrors.ustc.edu.cn/nix-channels/store"
       "https://cache.nixos.org"
       "https://nix-community.cachix.org"
-      "https://nix-gaming.cachix.org"
       "https://noctalia.cachix.org"
     ];
     extra-trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "nix-community.cachix.org-1:4BzitgziQkMCO+4QhMhVA8Wp9T5IhzsaCqPCU3c1gQ8="
-      "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
       "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
     ];
   };
