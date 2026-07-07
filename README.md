@@ -332,7 +332,8 @@ sudo reboot
 
 **场景：在 Windows Hyper-V 中测试配置，无需物理机。**
 
-**特点：没有 GPU、不涉及游戏，主要用来验证模块语法和桌面组件能否正常加载。**
+> Hyper-V 里**没有办法复制粘贴**，下面每条命令都需要手打。命令都不长，逐个敲就行。
+> 注释（`#` 开头那行）是解释，不需要打。
 
 ### 创建虚拟机（Windows 管理员 PowerShell）
 
@@ -345,56 +346,94 @@ Set-VMFirmware -VMName $vm -EnableSecureBoot Off
 Connect-VMNetworkAdapter -VMName $vm -SwitchName "Default Switch"
 ```
 
-### 设置用户密码
+把 NixOS GNOME ISO 挂到虚拟光驱，从 ISO 启动。进桌面后打开终端。
 
-安装前先生成一个密码哈希，装好系统后用来登录桌面：
+### 第一步：联网 + 装 git
 
 ```bash
-# 输入你想要的登录密码，会输出一串 $y$... 格式的内容
-mkpasswd -m yescrypt
-# 复制输出的哈希值，后面要用
+# 确认能上网（右上角网络图标，或命令行 ping）
+ping -c 3 nixos.org
+
+# 装 git（ISO 没有，之后克隆仓库要用）
+nix-shell -p git
 ```
 
-> 如果你跳过这步，装好后用户 `feng` 没有密码，登录不了图形界面。
-
-打开 `vim vars/default.nix`，把输出的哈希粘贴到 `initialHashedPassword` 的位置（替换掉 `null`）。
-
-### 虚拟机内安装
+### 第二步：克隆仓库
 
 ```bash
-# 查看磁盘（VM 里通常是 /dev/sda）
+git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos
+cd /mnt/etc/nixos
+```
+
+### 第三步：设置登录密码
+
+装好系统后需要用密码登录 ReGreet 图形界面。现在先生成：
+
+```bash
+mkpasswd -m yescrypt
+# 输入你要的密码（需要输两次），会输出一串 $y$... 格式的哈希值
+# 复制这串哈希值
+```
+
+把哈希值写入配置：
+
+```bash
+nano vars/default.nix
+# 找到 initialHashedPassword 这行（约第 32 行）
+# 把 null 替换成你刚复制的哈希值（用引号包起来）
+# Ctrl+O 保存，Ctrl+X 退出
+```
+
+### 第四步：分区挂载
+
+```bash
+# 查看磁盘（VM 里通常是 /dev/sda，确认一下）
 lsblk
 
-# 分区（UEFI + Btrfs）
+# 分区
 sudo parted /dev/sda -- mklabel gpt
 sudo parted /dev/sda -- mkpart ESP fat32 1MiB 512MiB
 sudo parted /dev/sda -- set 1 esp on
 sudo parted /dev/sda -- mkpart root btrfs 512MiB 100%
 
+# 格式化
 sudo mkfs.fat -F 32 -n BOOT /dev/sda1
 sudo mkfs.btrfs -L NIXOS /dev/sda2
 
+# 挂载
 sudo mount -o compress=zstd,noatime /dev/sda2 /mnt
 sudo mkdir /mnt/boot
 sudo mount /dev/sda1 /mnt/boot
+```
 
-# 克隆仓库（先于 nixos-generate-config，确保 /mnt/etc/nixos 目录存在）
-nix-shell -p git --run "git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /mnt/etc/nixos"
+### 第五步：生成硬件配置
 
-# 生成硬件配置（生成的文件会放在 /mnt/etc/nixos/ 里）
+```bash
+# 扫描硬件生成配置（会自动放在 /mnt/etc/nixos/ 下）
 sudo nixos-generate-config --root /mnt
 
-# 把生成的硬件配置文件复制到虚拟机 host 目录
+# 把硬件配置复制到 Hyper-V 主机目录
 sudo cp /mnt/etc/nixos/hardware-configuration.nix /mnt/etc/nixos/hosts/HAO_HYPERV/
+```
 
-# 安装
+### 第六步：安装系统
+
+```bash
 sudo nixos-install --flake /mnt/etc/nixos#HAO_HYPERV
+```
 
-# 重启
+> 第一次执行会下载大量包，**正常需要 10-30 分钟**。屏幕上的 `■` 方块是字体问题，不影响安装。
+
+### 第七步：重启
+
+```bash
 sudo reboot
 ```
 
-> **限制：** 无 GPU 加速、无增强会话模式。niri 用 llvmpipe 软件渲染，够验证配置语法正确，不适合测性能或游戏。
+拔掉 ISO。如果能进 ReGreet 图形登录界面 → 输密码 → Niri + Noctalia 桌面，恭喜装好了。
+
+> **限制：** 无 GPU 加速、无增强会话模式。纯 CPU 软件渲染，够验证配置语法和桌面组件，不适合测性能或游戏。
+> **黑屏排查：** 如果重启后黑屏，确认 `boot.blacklistedKernelModules = [ "hyperv_fb" ]` 已在配置中。Hyper-V 合成帧缓冲可能跟 Wayland 冲突。
 
 ---
 
