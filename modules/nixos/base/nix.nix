@@ -1,5 +1,8 @@
 { lib, myvars, ... }:
 {
+  # ── 许可：允许 unfree 包（NVIDIA 驱动 / Steam / Proton / Wine） ──
+  nixpkgs.config.allowUnfree = true;
+
   # Nix 自身设置
   nix = {
     settings = {
