@@ -1,4 +1,4 @@
-{ config, lib, pkgs, myvars, ... }:
+{ config, lib, myvars, ... }:
 let
   inherit (lib) mkEnableOption mkIf;
   cfg = config.modules.desktop.hermes-access;
@@ -33,7 +33,7 @@ in
       instances.hao_link = {
         settings = {
           network_name = "hao_link";
-          network_secret = myvars.easytierNetworkSecret or null;
+          network_secret = myvars.easytierNetworkSecret or null; # deadnix: skip
           dhcp = true;
           hostname = myvars.hostname;
 
@@ -42,7 +42,7 @@ in
             "udp://0.0.0.0:11010"
           ];
 
-          peers = myvars.easytierPeers or [ ];
+          peers = myvars.easytierPeers or [ ]; # deadnix: skip
         };
       };
     };
