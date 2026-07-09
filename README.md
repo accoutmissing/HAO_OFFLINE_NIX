@@ -76,7 +76,19 @@ ping -c 3 nixos.org
 
 **特点：最快最简单，用 disko 自动分区，不到 5 分钟搞定。**
 
-### 第一步：分区（一条命令）
+> ⚠️ **这条命令会清空整块硬盘**。如果硬盘上有重要文件，先备份。
+
+### 第一步：先验证配置
+
+```bash
+# 看一下仓库定义了哪些主机和包
+nix flake show
+
+# 确认配置能解析通过
+nix flake check
+```
+
+### 第二步：分区（一条命令）
 
 ```bash
 sudo nix run github:accoutmissing/HAO_OFFLINE_NIX#disko -- --mode disko \
@@ -84,13 +96,13 @@ sudo nix run github:accoutmissing/HAO_OFFLINE_NIX#disko -- --mode disko \
 ```
 
 **这条命令干了什么：**
-- 把整块盘（`/dev/nvme0n1`）擦掉重新分区
+- 把整块盘（`/dev/nvme0n1`）**擦掉重新分区**
 - 分一个 512MB 的 EFI 启动分区（label 叫 `BOOT`）
 - 剩下的空间全给 NixOS（Btrfs 文件系统，label 叫 `NIXOS`）
 - 自动创建 `@`（根目录）和 `@home`（家目录）两个子卷
 - 自动挂载到 `/mnt`，省去手动 mount 的步骤
 
-> ⚠️ **这条命令会清空整块硬盘的数据**。如果你硬盘上有重要文件，先备份。
+> ⚠️ **disko 会自动识别 disko-config.nix 里写的磁盘设备（默认 nvme0n1）**，不是 lsblk 里看到的。/dev/nvme0n1 是整块盘，不是某个分区。运行前 `lsblk` 确认设备名正确，如果盘名不同，先改 disko-config.nix 里的 device 字段。
 
 **如果报错说设备不存在：**
 ```bash
@@ -500,6 +512,7 @@ nix develop
 | `statix check .` | 检查无用代码和反模式 |
 | `deadnix .` | 查找未使用的绑定 |
 | `nix flake check` | 全量验证（CI 也跑这个） |
+| `nix flake show` | 查看这个仓库定义了哪些配置和包 |
 
 ### CI
 
@@ -517,18 +530,46 @@ nix develop
 
 ---
 
+## 设计决策
+
+### 各主机关闭了哪些功能及原因
+
+| 主机 | 关闭项 | 原因 |
+|------|--------|------|
+| HAO_HYPERV | 游戏套件（Steam/Lutris/Gamemode） | VM 无 GPU，游戏不需要 |
+| HAO_HYPERV | Hermes 远程接管 | VM 仅测试用，不需要远程管理 |
+| HAO_HYPERV | fwupd 固件更新 | VM 无物理固件可更新 |
+| HAO_HYPERV | fstrim SSD TRIM | VHDX 由 Hyper-V 自动管理 |
+| HAO_HYPERV | `canTouchEfiVariables` | VM 不需要写 UEFI 变量 |
+| HAO_OFFLINE | power-profiles-daemon | 与 TLP 冲突，笔记本优先用 TLP |
+| HAO_OFFLINE | Noctalia 壁纸 + 桌面小部件 | 省电（笔记本电池优化） |
+
+### 为什么不用 sops-nix 或 agenix
+
+`vars/secrets.nix` + `.gitignore` 对单用户配置足够了。EasyTier 的密钥就是几个字符串，`cp template → 填值` 是最简路径。sops-nix 引入 age 密钥对和 .sops.yaml，在一个人的配置里收益为零，多一个可能断构建的环节。
+
+### 为什么去掉了 nix-gaming 依赖
+
+原 flake 依赖 github:fufexan/nix-gaming 提供游戏优化。nixpkgs 现已内置 Steam、Lutris、Gamemode 的完整支持，nix-gaming 的额外选项（如 pipewire.lowLatency）在较新 nixpkgs 中已不兼容。杀掉 100+ 行依赖换来一个 `programs.steam + programs.gamemode` 模块，更轻量。
+
+---
+
 ## 装好系统之后
 
 ### 常用命令
 
 ```bash
-# 更新系统（拉到最新包 + 部署）
-nix flake update && sudo nixos-rebuild switch --flake /etc/nixos#HAO_DESKTOP
+# 查看仓库定义（安装/修改前先看）
+nix flake show
 
-# 笔记本换成 HAO_OFFLINE，虚拟机换成 HAO_HYPERV
+# 验证配置能解析（推荐每次改动后跑，秒级完成）
+nix flake check
 
 # 只构建不切换（测试能不能编译通过）
 nixos-rebuild build --flake /etc/nixos#HAO_DESKTOP
+
+# 更新系统（拉到最新包 + 部署）
+nix flake update && sudo nixos-rebuild switch --flake /etc/nixos#HAO_DESKTOP
 
 # 回滚到上一个版本
 sudo nixos-rebuild switch --flake .#HAO_DESKTOP --rollback
@@ -536,6 +577,8 @@ sudo nixos-rebuild switch --flake .#HAO_DESKTOP --rollback
 # 清理旧版本释放空间
 sudo nix-collect-garbage --delete-older-than 7d
 ```
+
+> 所有命令里的 `HAO_DESKTOP` 换成 `HAO_OFFLINE`（笔记本）或 `HAO_HYPERV`（虚拟机）即可适配其他机器。
 
 > **`/etc/nixos#` 和 `github:accoutmissing/HAO_OFFLINE_NIX#` 有什么区别？**
 > - `/etc/nixos#`：用本地仓库（装好系统后，仓库在 `/etc/nixos`）
@@ -565,18 +608,18 @@ RTX 4070 独显直出，默认就是全部用独显。
 nixos/
 ├── flake.nix                        # 入口——定义用哪些包、怎么组合
 ├── hosts/
-│   ├── HAO_OFFLINE/                 # 笔记本
+│   ├── HAO_OFFLINE/                 # 笔记本 — 命名规则：机型功能 + 状态
 │   │   ├── default.nix              # 主机名 + 开启哪些模块
-│   │   ├── hardware-configuration.nix  ← .gitignore 排除，安装时生成
+│   │   ├── hardware-configuration.nix  ← .gitignore 排除（UUID 每台机器不同，安装时生成 nixos-generate-config 后复制过来）
 │   │   ├── optimus.nix              # 显卡驱动（GTX 1060）
-│   │   └── disko-config.nix         # 分区方案参考
-│   ├── HAO_DESKTOP/                 # 台式机
+│   │   └── disko-config.nix         # 分区方案参考（注释骨架，不可执行）
+│   ├── HAO_DESKTOP/                 # 台式机 — 命名规则：机型功能 + 状态
 │   │   ├── default.nix              # 主机名 + 开启哪些模块
-│   │   ├── hardware-configuration.nix  ← 跟踪在 git（因为用 label，不变）
+│   │   ├── hardware-configuration.nix  ← 跟踪在 git（用磁盘 label 识别，不变）
 │   │   ├── nvidia.nix               # 显卡驱动（RTX 4070）
-│   │   ├── disko-config.nix         # 单系统分区方案
-│   │   └── disko-config-dualboot.nix # 双系统参考
-│   └── HAO_HYPERV/                  # 虚拟机
+│   │   ├── disko-config.nix         # 单系统分区方案（可执行）
+│   │   └── disko-config-dualboot.nix # 双系统分区方案（参考）
+│   └── HAO_HYPERV/                  # 虚拟机 — 命名规则：平台名
 │       └── default.nix              # 主机名 + 关闭 GPU/游戏
 ├── modules/
 │   ├── nixos/
