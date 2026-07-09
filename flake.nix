@@ -20,27 +20,34 @@
 
     # 游戏优化
     nix-gaming = {
-      url = "github:fufexan/nix-gaming/25efde5";  # 2026-03-17
+      url = "github:fufexan/nix-gaming/25efde5";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # 桌面壳层（bar、dock、通知、锁屏、启动器）
+    # 桌面壳层
     noctalia = {
       url = "github:noctalia-dev/noctalia/legacy-v4";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # 格式化工具集
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
   # ── 输出 ────────────────────────────────────────────────────────────
   outputs =
-    { self, nixpkgs, home-manager, disko, nix-gaming, noctalia, ... }@inputs:
+    { self, nixpkgs, home-manager, disko, nix-gaming, noctalia, treefmt-nix, ... }@inputs:
     let
+      inherit (nixpkgs) lib;
       system = "x86_64-linux";
-      lib = nixpkgs.lib;
+      pkgs = nixpkgs.legacyPackages.${system};
       mylib = import ./lib { inherit lib; };
-      myvars = import ./vars { inherit lib; };
+      myvars = import ./vars { } ;
 
-      # 基础模块列表（所有主机共享的 infrastructure）
+      # 基础模块列表（所有主机共享）
       baseModules = [
         ./modules/nixos/base
         ./modules/nixos/desktop
@@ -55,7 +62,7 @@
         }
       ];
 
-      # 快速生成 nixosSystem，减少重复
+      # 快速生成 nixosSystem
       mkSystem = hostname: extraModules:
         let
           hostVars = myvars // { inherit hostname; };
@@ -77,26 +84,47 @@
             }
           ] ++ extraModules;
         };
+
+      # treefmt 配置
+      treefmtEval = treefmt-nix.lib.evalConfig pkgs ./treefmt.nix;
     in
     {
       # ── 系统配置 ──────────────────────────────────────────────────────
       nixosConfigurations = {
-        # 笔记本：Intel i7-8750H + GTX 1060 Optimus
         HAO_OFFLINE = mkSystem "HAO_OFFLINE" [ ];
-
-        # 台式机：Intel i5-13600KF + RTX 4070 Super
         HAO_DESKTOP = mkSystem "HAO_DESKTOP" [ ];
-
-        # Hyper-V 虚拟机测试（无 GPU，软件渲染）
         HAO_HYPERV = mkSystem "HAO_HYPERV" [ ];
       };
 
-      # ── 安装工具（可在 U 盘环境直接运行） ───────────────────────────
-      # 用法：sudo nix run github:accoutmissing/HAO_OFFLINE_NIX#disko -- --mode disko <配置>
+      # ── 安装工具 ──────────────────────────────────────────────────────
       packages.${system}.disko = disko.packages.${system}.disko;
+
+      # ── 格式化 ────────────────────────────────────────────────────────
+      formatter.${system} = treefmtEval.config.build.formatter;
+
+      # ── 开发环境 ──────────────────────────────────────────────────────
+      devShells.${system}.default = pkgs.mkShell {
+        name = "nixos-config";
+        buildInputs = [
+          treefmtEval.config.build.formatter
+          pkgs.statix
+          pkgs.deadnix
+        ];
+        shellHook = ''
+          echo "🔧 NixOS 配置开发环境"
+          echo "   nix fmt         格式化所有 .nix 文件"
+          echo "   statix check .  检查无用代码"
+          echo "   nix flake check 全量验证"
+        '';
+      };
+
+      # ── CI 检查 ───────────────────────────────────────────────────────
+      checks.${system} = {
+        formatting = treefmtEval.config.build.check self;
+      };
     };
 
-  # ── Nix 配置（对 flake 命令生效，系统级见 base/nix.nix） ──────
+  # ── Nix 配置 ──────────────────────────────────────────────────────
   nixConfig = {
     extra-substituters = [
       "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"

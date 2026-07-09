@@ -403,14 +403,44 @@ sudo nixos-rebuild switch --flake /etc/nixos#HAO_DESKTOP
 
 ---
 
+## 开发工具
+
+装好系统后，在仓库目录下可以一键进入开发环境：
+
+```bash
+nix develop
+```
+
+这会自动加载 `nixpkgs-fmt`（格式化）、`statix`（静态检查）、`deadnix`（无用代码检测）。
+
+| 命令 | 做什么 |
+|------|--------|
+| `nix fmt` | 格式化所有 .nix 文件 |
+| `statix check .` | 检查无用代码和反模式 |
+| `deadnix .` | 查找未使用的绑定 |
+| `nix flake check` | 全量验证（CI 也跑这个） |
+
+### CI
+
+每次 push 或 PR 到 `main` 分支，GitHub Actions 会自动跑 `nix flake check`。确保配置不会在提交后才发现问题。
+
+### Secrets 管理
+
+首次配置时运行：
+
+```bash
+./scripts/setup.sh
+```
+
+然后编辑 `vars/secrets.nix`，填入 EasyTier 密钥和 peer 地址。这个文件已被 `.gitignore` 排除，不会提交到仓库。
+
+---
+
 ## 装好系统之后
 
 ### 常用命令
 
 ```bash
-# 语法检查（推荐每次改动后跑，秒级完成）
-nix flake check
-
 # 更新系统（拉到最新包 + 部署）
 nix flake update && sudo nixos-rebuild switch --flake /etc/nixos#HAO_DESKTOP
 

@@ -1,4 +1,4 @@
-{ lib }:
+{ }:
 let
   # ── 二进制缓存（flake.nix nixConfig 与 base/nix.nix 共用） ──────
   cachixSubstituters = [
@@ -43,8 +43,8 @@ in
   ];
 
   # ── EasyTier 密钥（来自 gitignored secrets.nix，缺失时用空值降级） ──
-  easytierNetworkSecret = secrets.easytierNetworkSecret or null;
-  easytierPeers = secrets.easytierPeers or [ ];
+  easytierNetworkSecret = secrets.easytierNetworkSecret or null; # deadnix: skip
+  easytierPeers = secrets.easytierPeers or [ ]; # deadnix: skip
 
   # ── Nix 缓存（供 flake.nix nixConfig 与 base/nix.nix 引用） ──
   inherit cachixSubstituters cachixTrustedPublicKeys;
