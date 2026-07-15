@@ -18,7 +18,8 @@ in
       {
         users = [ myvars.username ];
         commands = [
-          { command = "ALL"; options = [ "NOPASSWD" ]; }
+          { command = "/run/current-system/sw/bin/nixos-rebuild"; options = [ "NOPASSWD" ]; }
+          { command = "/run/current-system/sw/bin/systemctl"; options = [ "NOPASSWD" ]; }
         ];
       }
     ];
