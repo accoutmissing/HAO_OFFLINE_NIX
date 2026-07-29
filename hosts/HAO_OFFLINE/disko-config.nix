@@ -17,16 +17,23 @@
             type = "filesystem";
             format = "vfat";
             mountpoint = "/boot";
+            mountOptions = [ "fmask=0077" "dmask=0077" ];
           };
         };
         root = {
           size = "100%";
           content = {
             type = "btrfs";
-            extraArgs = [ "-f" ];
+            extraArgs = [ "-L" "NIXOS" ];   # 磁盘 label = NIXOS（与 hardware-config by-label 一致）
             subvolumes = {
-              "@" = { mountpoint = "/"; };
-              "@home" = { mountpoint = "/home"; };
+              "@" = {
+                mountpoint = "/";
+                mountOptions = [ "compress=zstd" "noatime" ];
+              };
+              "@home" = {
+                mountpoint = "/home";
+                mountOptions = [ "compress=zstd" "noatime" ];
+              };
             };
           };
         };
