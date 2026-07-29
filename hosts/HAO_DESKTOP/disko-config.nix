@@ -7,7 +7,7 @@
 # 设备路径按实际调整（nvme0n1 / sda / nvme1n1 等）
 
 {
-  disk.main = {
+  disko.devices.disk.main = {
     type = "disk";
     device = "/dev/nvme0n1";
     content = {

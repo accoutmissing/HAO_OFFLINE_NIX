@@ -9,9 +9,7 @@
   # ── 主机身份 ────────────────────────────────────────────────────────
   networking.hostName = "HAO_DESKTOP";
 
-  # ── Intel Raptor Lake（i5-13600KF） ────────────────────────────────
-  boot.kernelModules = [ "kvm_intel" ];
-
+  # kvm_intel 已在 hardware-configuration.nix 中声明，此处不重复
   environment.systemPackages = with pkgs; [
     powertop
   ];
