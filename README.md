@@ -643,6 +643,36 @@ nixos/
 
 ---
 
+## 更新记录
+
+### v1.0.0 — 2026-07-29 (d9a03ff)
+
+首个生产就绪版本。经过四轮检阅，13 项问题全部修复。
+
+- 🎯 发布 GitHub Release: [v1.0.0](https://github.com/accoutmissing/HAO_OFFLINE_NIX/releases/tag/v1.0.0)
+- fix: HAO_OFFLINE disko 添加 `mountOptions` (compress=zstd, noatime) 和 `-L NIXOS` label，与 HAO_DESKTOP 对齐
+
+### a94fc24
+
+- fix: HAO_DESKTOP `default.nix` 移除重复的 `boot.kernelModules = [ "kvm_intel" ]`，由 `hardware-configuration.nix` 统一管理
+- fix: HAO_DESKTOP `disko-config.nix` 格式统一为 `disko.devices.disk.main`（与 HAO_OFFLINE 一致）
+
+### 60cee8c — 按检阅报告修复 10 项配置问题
+
+| # | 修复内容 | 文件 |
+|---|---------|------|
+| 🔴 1 | 密码 null assertion 防锁死 | `modules/nixos/base/user-group.nix` |
+| 🔴 2 | 笔记本 disko 开箱即用模板 | `hosts/HAO_OFFLINE/disko-config.nix` |
+| 🔴 3 | minimal-hyperv 用途注释 | `minimal-hyperv.nix` |
+| 🟡 4 | greetd restart 注释 | `modules/nixos/desktop/desktop-base.nix` |
+| 🟡 5 | sudo 路径变量化 | `modules/nixos/desktop/hermes-access.nix` |
+| 🟡 6 | clash-verge 首次启动注释 | `modules/nixos/desktop/networking/clash-verge.nix` |
+| 🟡 7 | binfmt ARM 支持 | `modules/nixos/desktop/virtualisation.nix` |
+| 🟡 8 | 台式机 max-jobs 优化 | `hosts/HAO_DESKTOP/default.nix` |
+| 🟡 9 | pnpm → pnpm_11 锁定版本 | `home/linux/default.nix` |
+| 🟡 10 | EasyTier secret null 保护 | `modules/nixos/desktop/hermes-access.nix` |
+
+
 ## 参考
 
 | 资源 | 用途 |
