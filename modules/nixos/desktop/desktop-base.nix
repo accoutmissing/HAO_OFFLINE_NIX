@@ -2,6 +2,7 @@
 {
   # ── Display Manager（greetd 图形登录） ────────────────────────────
   services.greetd.enable = lib.mkDefault true;
+  # greetd 崩溃后不自动重启，避免与 Niri session 重启逻辑冲突
   services.greetd.restart = false;
 
   # greeter 用户需要 video 组权限才能访问 GPU

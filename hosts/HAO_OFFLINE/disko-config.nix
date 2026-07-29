@@ -1,24 +1,36 @@
 # 磁盘分区配置（disko）
 # 安装系统时配置，格式参考: https://github.com/nix-community/disko
 #
-# 示例（单磁盘 UEFI + LUKS + Btrfs）：
-# {
-#   disk.main = {
-#     type = "disk";
-#     device = "/dev/nvme0n1";
-#     content = {
-#       type = "gpt";
-#       partitions = {
-#         ESP = {
-#           size = "512M";
-#           type = "EF00";
-#           content = { type = "filesystem"; format = "vfat"; mountpoint = "/boot"; };
-#         };
-#         root = {
-#           size = "100%";
-#           content = { type = "btrfs"; mountpoint = "/"; };
-#         };
-#       };
-#     };
-#   };
-# }
+# ⚠️ 安装前请确认你的磁盘设备路径（lsblk），按需修改 device 字段。
+#    默认值 /dev/nvme0n1 适用于大多数 NVMe 笔记本。
+{
+  disko.devices.disk.main = {
+    type = "disk";
+    device = "/dev/nvme0n1";  # ← 按需修改（nvme0n1 / sda / nvme1n1 等）
+    content = {
+      type = "gpt";
+      partitions = {
+        ESP = {
+          size = "512M";
+          type = "EF00";
+          content = {
+            type = "filesystem";
+            format = "vfat";
+            mountpoint = "/boot";
+          };
+        };
+        root = {
+          size = "100%";
+          content = {
+            type = "btrfs";
+            extraArgs = [ "-f" ];
+            subvolumes = {
+              "@" = { mountpoint = "/"; };
+              "@home" = { mountpoint = "/home"; };
+            };
+          };
+        };
+      };
+    };
+  };
+}

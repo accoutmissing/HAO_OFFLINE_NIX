@@ -1,4 +1,4 @@
-{ config, lib, myvars, ... }:
+{ config, lib, myvars, pkgs, ... }:
 let
   inherit (lib) mkEnableOption mkIf;
   cfg = config.modules.desktop.hermes-access;
@@ -18,8 +18,8 @@ in
       {
         users = [ myvars.username ];
         commands = [
-          { command = "/run/current-system/sw/bin/nixos-rebuild"; options = [ "NOPASSWD" ]; }
-          { command = "/run/current-system/sw/bin/systemctl"; options = [ "NOPASSWD" ]; }
+          { command = "${config.system.build.nixos-rebuild}/bin/nixos-rebuild"; options = [ "NOPASSWD" ]; }
+          { command = "${pkgs.systemd}/bin/systemctl"; options = [ "NOPASSWD" ]; }
         ];
       }
     ];
@@ -29,7 +29,7 @@ in
     # 密钥和 peer 列表来自 vars/secrets.nix（gitignored），
     # 公开仓库用户复制 vars/secrets.example.nix → vars/secrets.nix 填入实际值
     services.easytier = {
-      enable = true;
+      enable = lib.mkIf (myvars.easytierNetworkSecret != null) true;
 
       instances.hao_link = {
         settings = {
