@@ -159,7 +159,31 @@ sda        14.8G disk     ← 这是你的 U 盘
 
 ### 🅰️ 方案 A：单系统（推荐新手用这个，最简单）
 
+
+> ⚠️ **国内网络注意**：以下命令需要从 GitHub 下载，国内可能连不上或很慢。
+> 如果 `git clone` 报错 `Failed to connect` 或一直卡住，先试试下面任意一种方法：
+> 
+> **方法 1：用浏览器下载 ZIP（最简单）**
+> 在安装环境里打开 Firefox 浏览器，访问：
+> `https://github.com/accoutmissing/HAO_OFFLINE_NIX/archive/refs/heads/main.zip`
+> 下载完成后，在终端里解压：
+> ```bash
+> cd ~/Downloads
+> unzip main.zip
+> cd HAO_OFFLINE_NIX-main
+> ```
+> 
+> **方法 2：开代理**
+> 如果你有代理软件（Clash/V2Ray），先在安装环境里配置好代理：
+> ```bash
+> export https_proxy=http://127.0.0.1:7890
+> ```
+> 把 `7890` 换成你代理的端口号，然后再执行 `git clone`。
+> 
+> **方法 3：手机热点**
+> 有时候手机开热点比 WiFi/宽带更容易连上 GitHub，不妨试试。
 #### A-1：下载本仓库
+
 
 ```bash
 nix-shell -p git
@@ -286,7 +310,10 @@ nvme0n1          ← 整块硬盘
 
 > 💡 记住你压缩出来的是第几个分区（通常是 `p3`、`p4` 或 `p5`），后面要用。
 
+
+> ⚠️ **国内网络注意**：如果 `git clone` 连不上 GitHub，回到上面 [方案 A 的 A-1 步骤](#a-1下载本仓库) 看三种解决方法。
 #### B-3：下载本仓库
+
 
 ```bash
 nix-shell -p git

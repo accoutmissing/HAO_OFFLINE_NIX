@@ -90,6 +90,8 @@ nix flake show
 nix flake check
 ```
 
+> ⚠️ **国内网络注意**：后续 `git clone` 和 `nixos-install --flake github:...` 需要从 GitHub 拉取。如果连不上 GitHub，参考 [INSTALL_GUIDE.md](./INSTALL_GUIDE.md) 中「方案 A → A-1」的三种解决方法。
+
 ### 第二步：分区（一条命令）
 
 ```bash
