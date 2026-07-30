@@ -2,11 +2,11 @@
 # 台式机直出模式（无 Optimus），显示器直接插显卡
 # 默认独显全时工作，不需要 prime-offload 省电模式
 
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   environment.systemPackages = with pkgs; [
-    nvtop            # GPU 监控
+    nvtopPackages.nvidia   # GPU 监控（nvtop 顶层别名已移除，需用 nvtopPackages.*）
     # nvidia-prime 包已在 nixos-unstable 中移除，prime-run 由
     # hardware.nvidia.prime.offload.enableOffloadCmd 内置提供
   ];
@@ -24,11 +24,10 @@
     nvidiaSettings = true;              # nvidia-settings GUI
   };
 
-  # ── OpenGL ──────────────────────────────────────────────────────────
-  hardware.opengl = {
+  # ── 图形栈（24.11 起 hardware.opengl 更名为 hardware.graphics） ────
+  hardware.graphics = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;             # Steam 需要 32 位 GL
+    enable32Bit = true;                 # Steam 需要 32 位 GL
   };
 
   # 驱动列表

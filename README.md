@@ -95,8 +95,13 @@ nix flake check
 ### 第二步：分区（一条命令）
 
 ```bash
-sudo nix run github:accoutmissing/HAO_OFFLINE_NIX#disko -- --mode disko \
-  https://raw.githubusercontent.com/accoutmissing/HAO_OFFLINE_NIX/main/hosts/HAO_DESKTOP/disko-config.nix
+# 先克隆仓库（disko 需要本地配置文件，远程 URL 不可靠）
+nix-shell -p git
+git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+cd HAO_OFFLINE_NIX
+
+# 执行分区
+sudo nix run .#disko -- --mode disko hosts/HAO_DESKTOP/disko-config.nix
 ```
 
 **这条命令干了什么：**
@@ -290,7 +295,7 @@ sudo parted /dev/nvme0n1 -- set 1 esp on
 sudo parted /dev/nvme0n1 -- mkpart primary btrfs 512MB 100%
 
 # 格式化
-sudo mkfs.fat -F 32 /dev/nvme0n1p1
+sudo mkfs.fat -F 32 -n BOOT /dev/nvme0n1p1
 sudo mkfs.btrfs -L NIXOS /dev/nvme0n1p2
 
 # 创建子卷 + 挂载（同上）
@@ -328,6 +333,12 @@ sudo nixos-generate-config --root /mnt
 
 ```bash
 sudo cp /mnt/etc/nixos/hardware-configuration.nix /mnt/etc/nixos/hosts/HAO_OFFLINE/
+
+# ⚠️ 关键一步：git 仓库型 flake 只能看到被 git 跟踪的文件。
+# 该文件被 .gitignore 排除，必须强制 add，否则 nixos-install 会报
+# "The 'fileSystems' option does not specify your root file system"
+cd /mnt/etc/nixos
+sudo git add -f hosts/HAO_OFFLINE/hardware-configuration.nix
 ```
 
 > **为什么还要复制？** `nixos-generate-config` 生成的文件在 `/mnt/etc/nixos/` 下，但我们的仓库结构里硬件配置放在 `hosts/HAO_OFFLINE/` 下。需要复制过去，这样 `nixos-install` 才能找到它。
@@ -430,6 +441,12 @@ sudo nixos-generate-config --root /mnt
 
 # 把硬件配置复制到 Hyper-V 主机目录
 sudo cp /mnt/etc/nixos/hardware-configuration.nix /mnt/etc/nixos/hosts/HAO_HYPERV/
+
+# ⚠️ 关键一步：git 仓库型 flake 看不到未跟踪文件，必须强制 add，
+# 否则安装时会报根文件系统未定义
+cd /mnt/etc/nixos
+sudo git add -f hosts/HAO_HYPERV/hardware-configuration.nix
+cd -
 ```
 
 ### 第六步：安装系统

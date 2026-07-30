@@ -2,12 +2,12 @@
 # 方案：PRIME Offload — 默认用 Intel 核显省电，游戏/渲染时按需调用独显
 # 用法：prime-run <程序>  或  nvidia-offload <程序>
 
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # ── 系统包 ──────────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [
-    nvtop            # NVIDIA GPU 监控
+    nvtopPackages.full   # GPU 监控（Intel + NVIDIA；nvtop 顶层别名已移除）
     # prime-run / nvidia-offload 由 hardware.nvidia.prime.offload 内置提供
     # nvidia-prime 独立包已在 nixos-unstable 中移除
   ];
@@ -36,11 +36,10 @@
     };
   };
 
-  # ── OpenGL（Intel + NVIDIA 共用） ──────────────────────────────────
-  hardware.opengl = {
+  # ── 图形栈（24.11 起 hardware.opengl 更名为 hardware.graphics） ────
+  hardware.graphics = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;             # Steam 需要 32 位 GL
+    enable32Bit = true;                 # Steam 需要 32 位 GL
   };
 
   # 驱动列表（nvidia 驱动同时处理 NVIDIA 和 Intel）

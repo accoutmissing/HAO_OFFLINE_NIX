@@ -3,12 +3,13 @@
 
   # ── 输入源 ──────────────────────────────────────────────────────────
   inputs = {
-    # NixOS 官方源
+    # NixOS 官方源（滚动更新；与 Home Manager master 对齐）
+    # 首次在 Nix 环境中务必生成并提交 flake.lock，避免上游变化直接破坏构建
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Home Manager（用户级包管理）
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.05";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

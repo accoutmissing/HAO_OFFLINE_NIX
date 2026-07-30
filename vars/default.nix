@@ -1,5 +1,9 @@
 { }:
 let
+  # CI 可通过环境变量提供不可登录的占位哈希；真实安装仍需在本文件写入 yescrypt 哈希。
+  # builtins.getEnv 只用于 CI assertion，不应承载真实密钥。
+  ciPasswordHash = builtins.getEnv "CI_PASSWORD_HASH";
+
   # ── 二进制缓存（flake.nix nixConfig 与 base/nix.nix 共用） ──────
   cachixSubstituters = [
     "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
@@ -29,7 +33,10 @@ in
 
   # 初始密码（安装后首次登录用，需立即修改）
   # 生成: mkpasswd -m yescrypt
-  initialHashedPassword = null; # null = 安装时强制设置密码
+  # CI 可通过 CI_PASSWORD_HASH + --impure 注入不可登录的占位值；
+  # 正常安装不设置该环境变量，null assertion 会强制用户填写真实哈希。
+  initialHashedPassword =
+    if ciPasswordHash != "" then ciPasswordHash else null; # null = 安装前必须设置
 
   # SSH 公钥（用于远程部署和管理）
   mainSshAuthorizedKeys = [

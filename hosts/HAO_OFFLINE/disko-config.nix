@@ -16,6 +16,7 @@
           content = {
             type = "filesystem";
             format = "vfat";
+            extraArgs = [ "-n" "BOOT" ];   # 设 label，与备用 by-label 挂载方案一致
             mountpoint = "/boot";
             mountOptions = [ "fmask=0077" "dmask=0077" ];
           };

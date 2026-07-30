@@ -246,7 +246,20 @@ nano hosts/HAO_DESKTOP/disko-config.nix
 
 分区成功后，硬盘已经被挂载到 `/mnt`。
 
-#### A-5：安装系统
+#### A-5：生成硬件配置（笔记本必做，台式机可跳过）
+
+如果你选择 `HAO_OFFLINE`（笔记本），安装前先生成并加入 flake：
+
+```bash
+sudo nixos-generate-config --root /mnt
+sudo cp /mnt/etc/nixos/hardware-configuration.nix hosts/HAO_OFFLINE/
+# git 仓库型 flake 看不到被 .gitignore 排除的文件，必须强制加入索引
+sudo git add -f hosts/HAO_OFFLINE/hardware-configuration.nix
+```
+
+台式机 `HAO_DESKTOP` 已带按磁盘 label 编写的硬件配置，可以直接进入下一步。
+
+#### A-6：安装系统
 
 ```bash
 sudo nixos-install --flake .#HAO_DESKTOP
@@ -356,6 +369,8 @@ sudo mount -o subvol=@home,compress=zstd,noatime /dev/nvme0n1p5 /mnt/home
 ```bash
 sudo nixos-generate-config --root /mnt
 sudo cp /mnt/etc/nixos/hardware-configuration.nix hosts/HAO_DESKTOP/
+# 生成文件未被 git 跟踪时，flake 看不到它；强制加入索引
+sudo git add -f hosts/HAO_DESKTOP/hardware-configuration.nix
 ```
 
 #### B-7：修复 /boot 路径（如果需要）

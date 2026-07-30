@@ -1,4 +1,4 @@
-{ myvars, config, pkgs, lib, ... }:
+{ myvars, pkgs, ... }:
 {
   # 禁止系统外修改用户
   users.mutableUsers = false;
@@ -31,7 +31,10 @@
   };
 
   users.users.root = {
-    inherit (myvars) initialHashedPassword;
+    # 禁用 root 密码登录（与普通用户共用同一哈希会扩大泄露面）；
+    # 远程用 SSH 密钥（PermitRootLogin prohibit-password），
+    # 本地维护用 feng + sudo（wheel 组）
+    hashedPassword = "!";
     openssh.authorizedKeys.keys = myvars.mainSshAuthorizedKeys;
   };
 }

@@ -2,6 +2,9 @@
 {
   # ── Display Manager（greetd 图形登录） ────────────────────────────
   services.greetd.enable = lib.mkDefault true;
+  # ReGreet 作为 greeter（自动填充 greetd.settings.default_session；
+  # 只开 greetd.enable 不配 greeter 会导致 settings 未定义，eval 报错）
+  programs.regreet.enable = lib.mkDefault true;
   # greetd 崩溃后不自动重启，避免与 Niri session 重启逻辑冲突
   services.greetd.restart = false;
 
@@ -36,7 +39,9 @@
 
   # ── 输入法（Fcitx5 + Rime） ────────────────────────────────────────
   i18n.inputMethod = {
-    enabled = "fcitx5";
+    # 24.11 起 `enabled = "fcitx5"` 更名为 enable + type
+    enable = true;
+    type = "fcitx5";
     fcitx5.addons = with pkgs; [
       fcitx5-rime
       fcitx5-chinese-addons

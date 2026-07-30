@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ myvars, pkgs, ... }:
 
 {
   imports = [
@@ -7,7 +7,7 @@
   ];
 
   # ── 主机身份 ────────────────────────────────────────────────────────
-  networking.hostName = "HAO_DESKTOP";
+  networking.hostName = myvars.hostname;   # 由 mkSystem 注入，与 flake.nix 单一来源
 
   # kvm_intel 已在 hardware-configuration.nix 中声明，此处不重复
   environment.systemPackages = with pkgs; [

@@ -11,10 +11,9 @@
     # colord 在 NixOS 中用硬件模块启用
 
     # ── 开发工具 ─────────────────────────────────────────────────
-    nodejs                    # 默认最新 LTS（当前约 Node 24）
+    nodejs                    # 默认最新 LTS
     python3
-    podman
-    podman-compose
+    podman-compose            # podman CLI 由 virtualisation.podman.enable 提供，不重复安装
 
     # ── 终端工具 ─────────────────────────────────────────────────
     kitty                     # 终端模拟器
@@ -25,11 +24,12 @@
     pavucontrol               # 音量控制
 
     # ── 文件管理 ─────────────────────────────────────────────────
-    thunar                    # 文件管理器
-    thunar-archive-plugin
-    thunar-volman
+    # Thunar 系列在 xfce.* 命名空间，顶层别名不可靠
+    xfce.thunar               # 文件管理器
+    xfce.thunar-archive-plugin
+    xfce.thunar-volman
     gvfs                      # 挂载/回收站
-    tumbler                   # 缩略图
+    xfce.tumbler              # 缩略图
 
     # ── 虚拟化管理 ────────────────────────────────────────────────
     virt-manager              # libvirtd GUI 管理

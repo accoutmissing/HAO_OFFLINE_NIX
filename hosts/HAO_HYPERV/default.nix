@@ -8,7 +8,7 @@
 #   - 网络：Default Switch
 #   - 磁盘：≥ 30GB VHDX
 
-{ lib, pkgs, ... }:
+{ lib, myvars, ... }:
 
 let
   hasHardwareConfig = builtins.pathExists ./hardware-configuration.nix;
@@ -17,7 +17,23 @@ in
   imports = lib.optionals hasHardwareConfig [ ./hardware-configuration.nix ];
 
   # ── 主机身份 ──────────────────────────────────────────────────────
-  networking.hostName = "HAO_HYPERV";
+  networking.hostName = myvars.hostname;   # 由 mkSystem 注入，与 flake.nix 单一来源
+
+  # ── 兜底文件系统（仅在 hardware-configuration.nix 缺失时生效） ────
+  # 与 README 的 Hyper-V 手动分区命令一致（mkfs.fat -n BOOT / mkfs.btrfs -L NIXOS，无子卷）；
+  # 让 CI 能完整求值，真机上仍推荐生成硬件配置并 git add -f
+  fileSystems = lib.mkIf (!hasHardwareConfig) {
+    "/" = {
+      device = "/dev/disk/by-label/NIXOS";
+      fsType = "btrfs";
+      options = [ "compress=zstd" "noatime" ];
+    };
+    "/boot" = {
+      device = "/dev/disk/by-label/BOOT";
+      fsType = "vfat";
+      options = [ "fmask=0077" "dmask=0077" ];
+    };
+  };
 
   # ── Hyper-V 集成服务 ────────────────────────────────────────────
   virtualisation.hypervGuest.enable = true;
