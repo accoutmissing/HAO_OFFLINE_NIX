@@ -522,26 +522,6 @@ sudo umount -R /mnt
 
 > 这篇指南写给你的——一个可能从来没碰过 Linux 的人。NixOS 的学习曲线确实陡，但装好之后你会发现它的好：重装系统不再是一场噩梦，换电脑只需要一个 U 盘 + 一行命令。
 
-### ❓ 装完后启动黑屏
-
-1. 确认拔掉了 U 盘
-2. 如果是双系统，检查 EFI 分区路径是否正确（B-7 步）
-3. 如果是 Hyper-V 虚拟机，确认安全启动已关闭
-
-### ❓ 装完后桌面上什么都没有
-
-正常！这个桌面（Niri）是极简风格，顶部有状态栏，底部 Dock 是自动隐藏的（鼠标移到底部会浮出来）。按 `Win + 空格` 打开启动器。
-
-### ❓ 我想装更多软件
-
-在 `/etc/nixos` 目录下编辑配置文件（`modules/nixos/desktop/packages.nix`），在 `environment.systemPackages` 列表里加上你想要软件的包名，然后运行 `sudo nixos-rebuild switch --flake .#你的主机名`。
-
-去 https://search.nixos.org/packages 搜索你想要的软件包名。
-
-### ❓ 装完后发现分区太小了
-
-分区大小装好后就很难改了。建议至少给 NixOS 分 200GB。
-
 ---
 
 ## 八、还有问题？
