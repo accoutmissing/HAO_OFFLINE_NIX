@@ -37,9 +37,9 @@
 
 ### 做安装盘
 
-1. 下载 NixOS 镜像（选 **GNOME** 版本，有图形界面方便操作）
+1. 下载 NixOS 镜像（选 **graphical** 版本，有图形界面方便操作；25.05 起替代了旧的 GNOME 版）
    - 国内镜像：https://mirrors.tuna.tsinghua.edu.cn/nixos-images/
-   - 找最新 `nixos-gnome-*-x86_64-linux.iso`
+   - 找最新 `latest-nixos-graphical-x86_64-linux.iso`
 
 2. 写入 U 盘（Windows 用 Rufus / balenaEtcher，Linux 用 dd）
    ```bash
@@ -373,7 +373,7 @@ Set-VMFirmware -VMName $vm -EnableSecureBoot Off
 Connect-VMNetworkAdapter -VMName $vm -SwitchName "Default Switch"
 ```
 
-把 NixOS GNOME ISO 挂到虚拟光驱，从 ISO 启动。进桌面后打开终端。
+把 NixOS graphical ISO 挂到虚拟光驱，从 ISO 启动。进桌面后打开终端。
 
 ### 第一步：联网 + 装 git
 

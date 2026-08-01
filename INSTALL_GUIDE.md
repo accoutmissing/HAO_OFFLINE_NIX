@@ -33,9 +33,9 @@
 
 - 打开浏览器，访问：**https://mirrors.tuna.tsinghua.edu.cn/nixos-images/**
 - 往下翻，找到最新日期那个文件夹，点进去
-- 下载文件名里带 **`gnome`** 和 **`x86_64-linux`** 的 `.iso` 文件
-  - 例如：`nixos-gnome-25.05.xxxx.xxxx-x86_64-linux.iso`
-- GNOME 版本带图形界面，对新手友好
+- 下载文件名里带 **`graphical`** 和 **`x86_64-linux`** 的 `.iso` 文件（25.05 起统一为 graphical）
+  - 例如：`latest-nixos-graphical-x86_64-linux.iso`
+- graphical 版本带完整桌面环境，对新手友好
 
 **2. U 盘写入工具**
 
