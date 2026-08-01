@@ -46,16 +46,6 @@ in
   services.thermald.enable = true;      # Intel CPU 温度管理
   services.tlp.enable = true;           # 电池优化
 
-  # zram 压缩内存交换（磁盘无 swap 分区，游戏/编译时防 OOM）
-  zramSwap = {
-    enable = true;
-    memoryPercent = 50;
-  };
-
-  # TLP 与 power-profiles-daemon 冲突（上游不推荐同时启用）
-  # 笔记本保留 TLP（更细粒度的电池优化），关闭 desktop-base 中启用的 ppd
-  services.power-profiles-daemon.enable = lib.mkForce false;
-
   # ── Noctalia 省电模式（笔记本） ─────────────────────────────────────
   home-manager.users.${myvars.username}.programs.noctalia-shell.settings.noctaliaPerformance = {
     disableWallpaper = lib.mkForce true;
