@@ -42,10 +42,9 @@
       mylib = import ./lib { inherit lib; };
       myvars = import ./vars { } ;
 
-      # 基础模块列表（所有主机共享）
-      baseModules = [
+      # 核心模块列表（所有主机共享，不含桌面）
+      coreModules = [
         ./modules/nixos/base
-        ./modules/nixos/desktop
         disko.nixosModules.default
         home-manager.nixosModules.home-manager
         {
@@ -58,18 +57,22 @@
       ];
 
       # 快速生成 nixosSystem
-      mkSystem = hostname: extraModules:
+      # desktop = true: 桌面主机（默认）
+      # desktop = false: 服务器/无头主机（不导入 desktop 模块）
+      mkSystem = { hostname, desktop ? true, extraModules ? [ ] }:
         let
           hostVars = myvars // { inherit hostname; };
           args = inputs // {
             inherit inputs mylib system;
             myvars = hostVars;
           };
+          systemModules = coreModules
+            ++ lib.optional desktop ./modules/nixos/desktop;
         in
         lib.nixosSystem {
           inherit system;
           specialArgs = args;
-          modules = baseModules ++ [
+          modules = systemModules ++ [
             ./hosts/${hostname}
             {
               home-manager = {
@@ -86,9 +89,10 @@
     {
       # ── 系统配置 ──────────────────────────────────────────────────────
       nixosConfigurations = {
-        HAO_OFFLINE = mkSystem "HAO_OFFLINE" [ ];
-        HAO_DESKTOP = mkSystem "HAO_DESKTOP" [ ];
-        HAO_HYPERV = mkSystem "HAO_HYPERV" [ ];
+        HAO_OFFLINE = mkSystem { hostname = "HAO_OFFLINE"; };
+        HAO_DESKTOP = mkSystem { hostname = "HAO_DESKTOP"; };
+        HAO_HYPERV = mkSystem { hostname = "HAO_HYPERV"; };
+        HAO_SERVER = mkSystem { hostname = "HAO_SERVER"; desktop = false; };
       };
 
       # ── 安装工具 ──────────────────────────────────────────────────────
