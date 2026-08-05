@@ -68,7 +68,7 @@ in
   # ── 模块开关 ──────────────────────────────────────────────────
   # server 模块（hardening/easytier/containers/auto-upgrade/zram）
   # 已在 imports 中整体引入，默认全部启用
-  # 若某台 VPS 不需要自动更新：services.system.autoUpgrade.enable = false
+  # 若某台 VPS 不需要自动更新：system.autoUpgrade.enable = false
 
   system.stateVersion = "25.05";
 }
