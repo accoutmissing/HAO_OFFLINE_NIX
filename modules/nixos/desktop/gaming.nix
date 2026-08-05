@@ -28,6 +28,7 @@ in
 
     # ── 系统级游戏包 ────────────────────────────────────────────────────
     environment.systemPackages = with pkgs; [
+      lutris
       mangohud
       gamescope
       winetricks
