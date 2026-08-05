@@ -53,6 +53,8 @@ in
   };
 
   # ── 模块开关 ─────────────────────────────────────────────────────────
+  # WinBoat 暂不启用（笔记本跑 Windows VM 耗电发热，需要时改为 true）
+  # modules.desktop.winboat.enable = true;
   modules.desktop.hermes-access.enable = true;
   modules.desktop.noctalia.enable = true;
   modules.desktop.gaming.enable = true;

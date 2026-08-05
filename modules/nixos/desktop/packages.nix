@@ -14,10 +14,6 @@
     font-manager
     # colord 在 NixOS 中用硬件模块启用
 
-    # ── Windows 兼容层 ───────────────────────────────────────────
-    winboat                   # 容器化 Windows VM（WinBoat，Beta）
-    freerdp                   # WinBoat 依赖的远程桌面协议
-
     # ── 开发工具 ─────────────────────────────────────────────────
     nodejs                    # 默认最新 LTS
     python3
