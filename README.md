@@ -1,6 +1,6 @@
 # 🖥️ NixOS 配置
 
-**笔记本 + 台式机 + 虚拟机共用的 NixOS 配置。** 用 flake 管理，多台机器共享大部分设置（桌面、输入法、开发环境、游戏），每台机器只写自己特有的部分（硬件驱动、电源方案）。
+**笔记本 + 台式机 + 虚拟机 + 服务器共用的 NixOS 配置。** 用 flake 管理，多台机器共享大部分设置（桌面、输入法、开发环境、游戏），每台机器只写自己特有的部分（硬件驱动、电源方案）。
 
 > ⚠️ **使用前：** 复制 `vars/secrets.example.nix` 为 `vars/secrets.nix`，填入你的 EasyTier 密钥和 peer 地址。
 
@@ -9,6 +9,7 @@
 | **HAO_OFFLINE** | 神舟战神 Z7-KP7Z 笔记本 | i7-8750H (Coffee Lake) | GTX 1060 6GB | 按需调用（省电） |
 | **HAO_DESKTOP** | 自组台式机 | i5-13600KF (Raptor Lake) | RTX 4070 Super 12GB | 独显常开（全性能） |
 | **HAO_HYPERV** | Hyper-V Gen 2 虚拟机 | 宿主机 vCPU | 无（软件渲染） | 不适用 |
+| **HAO_SERVER** | 家庭服务器 / VPS | 任意 | 无 | 无头服务器（HAO_SERVER 分支） |
 
 ---
 
@@ -642,10 +643,14 @@ nixos/
 │   │   └── disko-config-dualboot.nix # 双系统分区方案（参考）
 │   └── HAO_HYPERV/                  # 虚拟机 — 命名规则：平台名
 │       └── default.nix              # 主机名 + 关闭 GPU/游戏
+│   └── HAO_SERVER/                  # 服务器（HAO_SERVER 分支）— 无头主机
+│       ├── default.nix              # 主机名 + SSH 加固 + 容器
+│       └── disko-config.nix         # 单盘分区方案
 ├── modules/
 │   ├── nixos/
 │   │   ├── base/                    # 系统基础（引导、SSH、用户、语言）
-│   │   └── desktop/                 # 桌面环境（窗口管理器、输入法、音频、游戏）
+│   │   ├── desktop/                 # 桌面环境（窗口管理器、输入法、音频、游戏）
+│   │   └── server/                  # 服务器（fail2ban 加固、容器、自动更新）
 │   ├── home/linux/                  # 用户级配置（Zsh、Git、Starship）
 │   ├── lib/                         # 工具函数
 │   └── vars/                        # 用户名、SSH 公钥、缓存配置
@@ -661,6 +666,53 @@ nixos/
 - **想调整键盘布局/输入法**：改 `modules/nixos/desktop/`
 - **想改桌面壁纸/主题**：取决于你用的桌面壳层 Noctalia 的设置
 - **想给某台机器开某个功能**：改对应 `hosts/<hostname>/default.nix`，把 `enable = true` 加上
+
+---
+
+## 四、服务器 HAO_SERVER — 部署（HAO_SERVER 分支）
+
+> 服务器配置在 **HAO_SERVER** 分支上维护，与桌面 main 分支隔离。
+
+### 适用场景
+
+- 家庭服务器 / NAS（本机长期运行）
+- VPS 云服务器（公网，含 fail2ban 防爆破）
+
+### 特性
+
+| 模块 | 功能 |
+|------|------|
+| hardening | fail2ban + 防火墙默认拒绝 + 内核 sysctl 加固 |
+| easytier | P2P 组网（密钥缺失自动关闭） |
+| containers | Podman + lazydocker |
+| auto-upgrade | 每周自动更新 + 14 天 GC |
+| zram | 低内存 VPS 防 OOM |
+
+### 部署
+
+```bash
+# 服务器上（用 HAO_SERVER 分支）
+git clone -b HAO_SERVER https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
+cd /etc/nixos
+
+# 1. 填入密码哈希 + EasyTier 密钥（必做）
+#    mkpasswd -m yescrypt 生成后写入 vars/default.nix
+#    复制 vars/secrets.example.nix -> vars/secrets.nix
+
+# 2. 生成硬件配置并强制跟踪
+sudo nixos-generate-config --root /mnt
+sudo cp /mnt/etc/nixos/hardware-configuration.nix hosts/HAO_SERVER/
+sudo git add -f hosts/HAO_SERVER/hardware-configuration.nix
+
+# 3. 安装
+sudo nixos-install --flake .#HAO_SERVER
+```
+
+### 日常更新（或等自动更新）
+
+```bash
+sudo nixos-rebuild switch --flake .#HAO_SERVER
+```
 
 ---
 
