@@ -3,7 +3,7 @@
   home = {
     username = myvars.username;
     homeDirectory = "/home/${myvars.username}";
-    stateVersion = "25.05";
+    stateVersion = "26.05";
   };
 
   # 用户级包
