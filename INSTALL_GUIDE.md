@@ -409,7 +409,54 @@ sudo reboot
 
 ---
 
-## 六、装好之后干嘛
+## 六、服务器 HAO_SERVER — 部署（HAO_SERVER 分支）
+
+> 服务器配置在 **HAO_SERVER** 分支上维护，与桌面 main 分支隔离。
+
+### 适用场景
+
+- 家庭服务器 / NAS（本机长期运行）
+- VPS 云服务器（公网，含 fail2ban 防爆破）
+
+### 特性
+
+| 模块 | 功能 |
+|------|------|
+| hardening | fail2ban + 防火墙默认拒绝 + 内核 sysctl 加固 |
+| easytier | P2P 组网（密钥缺失自动关闭） |
+| containers | Podman + lazydocker |
+| auto-upgrade | 每周自动更新 + 14 天 GC |
+| zram | 低内存 VPS 防 OOM |
+
+### 部署
+
+```bash
+# 服务器上（用 HAO_SERVER 分支）
+git clone -b HAO_SERVER https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
+cd /etc/nixos
+
+# 1. 填入密码哈希 + EasyTier 密钥（必做）
+#    mkpasswd -m yescrypt 生成后写入 vars/default.nix
+#    复制 vars/secrets.example.nix → vars/secrets.nix
+
+# 2. 生成硬件配置并强制跟踪
+sudo nixos-generate-config --root /mnt
+sudo cp /mnt/etc/nixos/hardware-configuration.nix hosts/HAO_SERVER/
+sudo git add -f hosts/HAO_SERVER/hardware-configuration.nix
+
+# 3. 安装
+sudo nixos-install --flake .#HAO_SERVER
+```
+
+### 日常更新（或等自动更新）
+
+```bash
+sudo nixos-rebuild switch --flake .#HAO_SERVER
+```
+
+---
+
+## 七、装好之后干嘛
 
 ### 登录
 
@@ -462,7 +509,7 @@ sudo nix-collect-garbage --delete-older-than 7d
 
 ---
 
-## 七、常见问题
+## 八、常见问题
 
 ### ❓ 终端是什么？我怎么打开它？
 
@@ -511,7 +558,7 @@ sudo umount -R /mnt
 
 ---
 
-## 八、还有问题？
+## 九、还有问题？
 
 - **GitHub Issues**：https://github.com/accoutmissing/HAO_OFFLINE_NIX/issues
 - **NixOS 中文社区**：搜 "NixOS 中文" 找相关讨论群
@@ -522,15 +569,4 @@ sudo umount -R /mnt
 
 > 这篇指南写给你的——一个可能从来没碰过 Linux 的人。NixOS 的学习曲线确实陡，但装好之后你会发现它的好：重装系统不再是一场噩梦，换电脑只需要一个 U 盘 + 一行命令。
 
----
 
-## 八、还有问题？
-
-- **GitHub Issues**：https://github.com/accoutmissing/HAO_OFFLINE_NIX/issues
-- **NixOS 中文社区**：搜 "NixOS 中文" 找相关讨论群
-
-> 记住：遇到问题先看报错信息，把报错信息复制下来去搜索引擎搜一下，大概率别人也遇到过。
-
----
-
-> 这篇指南写给你的——一个可能从来没碰过 Linux 的人。NixOS 的学习曲线确实陡，但装好之后你会发现它的好：重装系统不再是一场噩梦，换电脑只需要一个 U 盘 + 一行命令。
