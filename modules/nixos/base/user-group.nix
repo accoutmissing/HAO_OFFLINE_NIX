@@ -30,13 +30,16 @@
       "systemd-journal"  # 只读访问全部系统日志（远程调试 journalctl 用）
     ];
     shell = pkgs.zsh;
+
+    # 主人主密钥 + 备份密钥在 base 层挂载，保证未启用 hermes-access 的
+    # 主机（如 HAO_HYPERV）也能 SSH 登录
+    openssh.authorizedKeys.keys =
+      myvars.mainSshAuthorizedKeys ++ myvars.backupSshAuthorizedKeys;
   };
 
   users.users.root = {
-    # 禁用 root 密码登录（与普通用户共用同一哈希会扩大泄露面）；
-    # 远程用 SSH 密钥（PermitRootLogin prohibit-password），
-    # 本地维护用 feng + sudo（wheel 组）
+    # root 完全锁定：无密码、无 SSH 密钥，任何登录途径都不放行；
+    # 维护统一走 feng + sudo（wheel 组）
     hashedPassword = "!";
-    openssh.authorizedKeys.keys = myvars.mainSshAuthorizedKeys;
   };
 }

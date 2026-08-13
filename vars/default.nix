@@ -53,6 +53,12 @@ in
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO23SY/1mwLZK75D6WBGK2Em1/aVl4T9Puwgm1VlVKxz"
   ];
 
+  # Hermes 云端接管专用公钥（与主人 main key 分离，可独立吊销）
+  # ⚠️ 填入你的 Hermes 云端 SSH 公钥；留空则云端无法接入（fail-closed）
+  hermesSshAuthorizedKeys = [
+    # "ssh-ed25519 AAAA...hermes-cloud-key"
+  ];
+
   # ── EasyTier 密钥（来自 gitignored secrets.nix，缺失时用空值降级） ──
   easytierNetworkSecret = secrets.easytierNetworkSecret or null; # deadnix: skip
   easytierPeers = secrets.easytierPeers or [ ]; # deadnix: skip
