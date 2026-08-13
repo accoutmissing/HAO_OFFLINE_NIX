@@ -3,6 +3,10 @@
   # ── 许可：允许 unfree 包（NVIDIA 驱动 / Steam / Proton / Wine） ──
   nixpkgs.config.allowUnfree = true;
 
+  # WinBoat 0.9.0 currently depends on EOL Electron 40.10.5.
+  # Keep this narrow exception only while WinBoat has no newer package.
+  nixpkgs.config.permittedInsecurePackages = [ "electron-40.10.5" ];
+
   # Nix 自身设置
   nix = {
     settings = {
