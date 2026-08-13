@@ -22,7 +22,7 @@
 
       # 图标与表情
       nerd-fonts.jetbrains-mono
-      noto-fonts-emoji
+      noto-fonts-color-emoji
     ];
 
     fontconfig = {

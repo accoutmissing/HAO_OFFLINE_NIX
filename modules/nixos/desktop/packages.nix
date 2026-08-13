@@ -36,7 +36,7 @@
     xfce.thunar-archive-plugin
     xfce.thunar-volman
     gvfs # 挂载/回收站
-    xfce.tumbler # 缩略图
+    tumbler # 缩略图
 
     # ── 虚拟化管理 ────────────────────────────────────────────────
     virt-manager # libvirtd GUI 管理
