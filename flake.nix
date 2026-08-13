@@ -81,7 +81,7 @@
         };
 
       # treefmt 配置
-      treefmtEval = treefmt-nix.lib.evalConfig pkgs ./treefmt.nix;
+      treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
     in
     {
       # ── 系统配置 ──────────────────────────────────────────────────────
