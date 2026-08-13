@@ -22,9 +22,9 @@
   # Git 配置
   programs.git = {
     enable = true;
-    userName = myvars.userfullname;
-    userEmail = myvars.useremail;
-    extraConfig = {
+    settings = {
+      user.name = myvars.userfullname;
+      user.email = myvars.useremail;
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;

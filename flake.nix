@@ -95,7 +95,7 @@
       packages.${system}.disko = disko.packages.${system}.disko;
 
       # ── 格式化 ────────────────────────────────────────────────────────
-      formatter.${system} = treefmtEval.config.build.formatter;
+      formatter.${system} = treefmtEval.config.build.wrapper;
 
       # ── 开发环境 ──────────────────────────────────────────────────────
       devShells.${system}.default = pkgs.mkShell {
