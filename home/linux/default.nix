@@ -10,7 +10,7 @@
   home.packages = with pkgs; [
     # 开发
     pnpm_11                   # pnpm（显式锁定版本，避免 nixpkgs 别名变化）
-    nodePackages.yarn         # Yarn classic v1（pkgs.yarn 可能已移除，用 nodePackages 更可靠）
+    yarn                      # Yarn classic v1
 
     # 工具
     bat                       # cat 替代（zsh alias cat=bat）
