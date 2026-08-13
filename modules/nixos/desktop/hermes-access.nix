@@ -48,7 +48,7 @@ in
           network_name = "hao_link";
           network_secret = myvars.easytierNetworkSecret;
           dhcp = true;
-          hostname = myvars.hostname;
+          inherit (myvars) hostname;
 
           listeners = [
             "tcp://0.0.0.0:11010"

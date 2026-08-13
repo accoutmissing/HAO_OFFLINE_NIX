@@ -19,7 +19,7 @@
           content = {
             type = "filesystem";
             format = "vfat";
-            extraArgs = [ "-n" "BOOT" ];   # ⚠️ 必须设 label：hardware-configuration 按 by-label/BOOT 挂载
+            extraArgs = [ "-n" "BOOT" ]; # ⚠️ 必须设 label：hardware-configuration 按 by-label/BOOT 挂载
             mountpoint = "/boot";
             mountOptions = [ "fmask=0077" "dmask=0077" ];
           };
@@ -28,7 +28,7 @@
           size = "100%";
           content = {
             type = "btrfs";
-            extraArgs = [ "-L" "NIXOS" ];   # 磁盘 label = NIXOS
+            extraArgs = [ "-L" "NIXOS" ]; # 磁盘 label = NIXOS
             subvolumes = {
               "@" = {
                 mountpoint = "/";

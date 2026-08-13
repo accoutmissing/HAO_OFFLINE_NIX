@@ -34,13 +34,13 @@
 
   # ── 输出 ────────────────────────────────────────────────────────────
   outputs =
-    { self, nixpkgs, home-manager, disko, noctalia, treefmt-nix, ... }@inputs:
+    { self, nixpkgs, home-manager, disko, treefmt-nix, ... }@inputs:
     let
       inherit (nixpkgs) lib;
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       mylib = import ./lib { inherit lib; };
-      myvars = import ./vars { } ;
+      myvars = import ./vars { };
 
       # 基础模块列表（所有主机共享）
       baseModules = [

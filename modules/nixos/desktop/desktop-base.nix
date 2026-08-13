@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   # ── Display Manager（greetd 图形登录） ────────────────────────────
   services.greetd.enable = lib.mkDefault true;
@@ -15,7 +15,7 @@
   };
 
   # ── 显示服务器 ──────────────────────────────────────────────────────
-  programs.niri.enable = true;      # Niri 窗口管理器
+  programs.niri.enable = true; # Niri 窗口管理器
 
   # Wayland 必需
   programs.dconf.enable = true;
@@ -23,9 +23,9 @@
     enable = true;
     xdgOpenUsePortal = true;
     extraPortals = with pkgs; [
-      xdg-desktop-portal-gnome  # niri 官方推荐 screencast 后端
-      xdg-desktop-portal-gtk    # 文件选择器
-      xdg-desktop-portal-wlr    # wlroots screencast 备选
+      xdg-desktop-portal-gnome # niri 官方推荐 screencast 后端
+      xdg-desktop-portal-gtk # 文件选择器
+      xdg-desktop-portal-wlr # wlroots screencast 备选
     ];
   };
 
@@ -69,8 +69,8 @@
   powerManagement.enable = true;
 
   # ── 硬件维护 ────────────────────────────────────────────────────────
-  services.fstrim.enable = true;    # NVMe SSD 定期 TRIM
-  services.fwupd.enable = true;     # LVFS 固件更新（主板/SSD）
+  services.fstrim.enable = true; # NVMe SSD 定期 TRIM
+  services.fwupd.enable = true; # LVFS 固件更新（主板/SSD）
 
   # ── Flatpak ─────────────────────────────────────────────────────────
   services.flatpak.enable = true;

@@ -1,4 +1,4 @@
-{ lib, ... }:
+_:
 {
   # zram 压缩内存交换
   zramSwap = {

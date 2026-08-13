@@ -19,7 +19,7 @@ in
       protontricks.enable = true;
       extest.enable = true;
       fontPackages = with pkgs; [
-        wqy_zenhei  # Steam 中文界面
+        wqy_zenhei # Steam 中文界面
       ];
     };
 
@@ -29,9 +29,9 @@ in
     # ── 系统级游戏包 ────────────────────────────────────────────────────
     environment.systemPackages = with pkgs; [
       lutris
-      heroic                    # Epic/GOG/亚马逊游戏客户端
-      protonup-qt               # Proton 版本管理（GUI）
-      vkbasalt                  # Vulkan 后处理（锐化/增强）
+      heroic # Epic/GOG/亚马逊游戏客户端
+      protonup-qt # Proton 版本管理（GUI）
+      vkbasalt # Vulkan 后处理（锐化/增强）
       mangohud
       gamescope
       winetricks

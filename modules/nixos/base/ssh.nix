@@ -1,4 +1,4 @@
-{ ... }:
+_:
 {
   # 启用 SSH（远程管理与部署用）
   services.openssh = {

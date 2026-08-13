@@ -14,7 +14,7 @@ in
     # ── 安装 Noctalia 包 + swayidle（空闲锁屏） ──────────────────────
     environment.systemPackages = with pkgs; [
       inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
-      swayidle        # 空闲检测 → 自动锁屏
+      swayidle # 空闲检测 → 自动锁屏
     ];
 
     # ── Noctalia 依赖的服务 ─────────────────────────────────────────────

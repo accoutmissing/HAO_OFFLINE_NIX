@@ -7,7 +7,7 @@
 {
   # ── 系统包 ──────────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [
-    nvtopPackages.full   # GPU 监控（Intel + NVIDIA；nvtop 顶层别名已移除）
+    nvtopPackages.full # GPU 监控（Intel + NVIDIA；nvtop 顶层别名已移除）
     # prime-run / nvidia-offload 由 hardware.nvidia.prime.offload 内置提供
     # nvidia-prime 独立包已在 nixos-unstable 中移除
   ];
@@ -18,13 +18,13 @@
     powerManagement.enable = true;
     # Pascal 架构不支持 fine-grained PM 和 Dynamic Boost
     powerManagement.finegrained = false;
-    open = false;                       # GTX 1060 Pascal 不支持 nvidia-open
-    nvidiaSettings = true;              # 提供 nvidia-settings GUI
+    open = false; # GTX 1060 Pascal 不支持 nvidia-open
+    nvidiaSettings = true; # 提供 nvidia-settings GUI
 
     prime = {
       offload = {
         enable = true;
-        enableOffloadCmd = true;        # 提供 nvidia-offload 命令
+        enableOffloadCmd = true; # 提供 nvidia-offload 命令
       };
 
       # ⚠️ Bus ID 装好系统后用 lspci 确认：
@@ -39,7 +39,7 @@
   # ── 图形栈（24.11 起 hardware.opengl 更名为 hardware.graphics） ────
   hardware.graphics = {
     enable = true;
-    enable32Bit = true;                 # Steam 需要 32 位 GL
+    enable32Bit = true; # Steam 需要 32 位 GL
   };
 
   # 驱动列表（nvidia 驱动同时处理 NVIDIA 和 Intel）

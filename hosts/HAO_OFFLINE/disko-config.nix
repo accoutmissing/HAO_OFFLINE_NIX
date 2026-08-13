@@ -6,7 +6,7 @@
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = "/dev/nvme0n1";  # ← 按需修改（nvme0n1 / sda / nvme1n1 等）
+    device = "/dev/nvme0n1"; # ← 按需修改（nvme0n1 / sda / nvme1n1 等）
     content = {
       type = "gpt";
       partitions = {
@@ -16,7 +16,7 @@
           content = {
             type = "filesystem";
             format = "vfat";
-            extraArgs = [ "-n" "BOOT" ];   # 设 label，与备用 by-label 挂载方案一致
+            extraArgs = [ "-n" "BOOT" ]; # 设 label，与备用 by-label 挂载方案一致
             mountpoint = "/boot";
             mountOptions = [ "fmask=0077" "dmask=0077" ];
           };
@@ -25,7 +25,7 @@
           size = "100%";
           content = {
             type = "btrfs";
-            extraArgs = [ "-L" "NIXOS" ];   # 磁盘 label = NIXOS（与 hardware-config by-label 一致）
+            extraArgs = [ "-L" "NIXOS" ]; # 磁盘 label = NIXOS（与 hardware-config by-label 一致）
             subvolumes = {
               "@" = {
                 mountpoint = "/";

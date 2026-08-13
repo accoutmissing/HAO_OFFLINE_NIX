@@ -5,14 +5,16 @@
     path:
     builtins.map (f: (path + "/${f}")) (
       builtins.attrNames (
-        lib.attrsets.filterAttrs (
-          name: _type:
-          (_type == "directory")
-          || (
-            (name != "default.nix")
-            && (lib.strings.hasSuffix ".nix" name)
+        lib.attrsets.filterAttrs
+          (
+            name: _type:
+            (_type == "directory")
+            || (
+              (name != "default.nix")
+              && (lib.strings.hasSuffix ".nix" name)
+            )
           )
-        ) (builtins.readDir path)
+          (builtins.readDir path)
       )
     );
 }

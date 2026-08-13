@@ -17,7 +17,7 @@ in
   imports = lib.optionals hasHardwareConfig [ ./hardware-configuration.nix ];
 
   # ── 主机身份 ──────────────────────────────────────────────────────
-  networking.hostName = myvars.hostname;   # 由 mkSystem 注入，与 flake.nix 单一来源
+  networking.hostName = myvars.hostname; # 由 mkSystem 注入，与 flake.nix 单一来源
 
   # ── 兜底文件系统（仅在 hardware-configuration.nix 缺失时生效） ────
   # 与 README 的 Hyper-V 手动分区命令一致（mkfs.fat -n BOOT / mkfs.btrfs -L NIXOS，无子卷）；
@@ -40,7 +40,7 @@ in
 
   # ── 引导（Hyper-V Gen 2 是 UEFI） ──────────────────────────────
   boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = lib.mkForce false;  # VM 里不需要
+  boot.loader.efi.canTouchEfiVariables = lib.mkForce false; # VM 里不需要
 
   # 黑名单 Hyper-V 合成帧缓冲（可能跟 Wayland 冲突）
   boot.blacklistedKernelModules = [ "hyperv_fb" ];
@@ -53,7 +53,7 @@ in
   services.xserver.videoDrivers = lib.mkForce [ "modesetting" ];
 
   # ── 模块开关 ────────────────────────────────────────────────────
-  modules.desktop.noctalia.enable = true;      # 桌面：开（验证桌面壳层）
-  modules.desktop.gaming.enable = false;       # 游戏：关（无 GPU）
+  modules.desktop.noctalia.enable = true; # 桌面：开（验证桌面壳层）
+  modules.desktop.gaming.enable = false; # 游戏：关（无 GPU）
   modules.desktop.hermes-access.enable = false; # 远程：关（测试不需要）
 }

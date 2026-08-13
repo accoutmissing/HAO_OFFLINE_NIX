@@ -6,7 +6,7 @@
 
 {
   environment.systemPackages = with pkgs; [
-    nvtopPackages.nvidia   # GPU 监控（nvtop 顶层别名已移除，需用 nvtopPackages.*）
+    nvtopPackages.nvidia # GPU 监控（nvtop 顶层别名已移除，需用 nvtopPackages.*）
     # nvidia-prime 包已在 nixos-unstable 中移除，prime-run 由
     # hardware.nvidia.prime.offload.enableOffloadCmd 内置提供
   ];
@@ -21,13 +21,13 @@
     # 若遇到稳定性问题，改为 open = false 切回 proprietary
     open = true;
 
-    nvidiaSettings = true;              # nvidia-settings GUI
+    nvidiaSettings = true; # nvidia-settings GUI
   };
 
   # ── 图形栈（24.11 起 hardware.opengl 更名为 hardware.graphics） ────
   hardware.graphics = {
     enable = true;
-    enable32Bit = true;                 # Steam 需要 32 位 GL
+    enable32Bit = true; # Steam 需要 32 位 GL
   };
 
   # 驱动列表

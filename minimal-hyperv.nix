@@ -2,7 +2,7 @@
 #    正式使用请走 flake：nixos-rebuild --flake .#HAO_HYPERV
 #    两者功能重叠但互不引用，避免混淆。
 
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 {
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = false;

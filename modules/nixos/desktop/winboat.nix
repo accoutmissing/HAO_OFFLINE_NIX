@@ -11,8 +11,8 @@ in
 
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
-      winboat                   # 容器化 Windows VM（WinBoat，Beta）
-      freerdp                   # WinBoat 依赖的远程桌面协议
+      winboat # 容器化 Windows VM（WinBoat，Beta）
+      freerdp # WinBoat 依赖的远程桌面协议
     ];
   };
 }

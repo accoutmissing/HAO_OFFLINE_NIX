@@ -27,7 +27,7 @@
       "networkmanager"
       "podman"
       "libvirtd"
-      "systemd-journal"  # 只读访问全部系统日志（远程调试 journalctl 用）
+      "systemd-journal" # 只读访问全部系统日志（远程调试 journalctl 用）
     ];
     shell = pkgs.zsh;
 

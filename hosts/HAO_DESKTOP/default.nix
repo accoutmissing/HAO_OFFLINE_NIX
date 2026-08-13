@@ -2,12 +2,12 @@
 
 {
   imports = [
-    ./hardware-configuration.nix   # 磁盘、内核模块（by-label，跟踪在 git）
-    ./nvidia.nix                    # RTX 4070 Super 驱动
+    ./hardware-configuration.nix # 磁盘、内核模块（by-label，跟踪在 git）
+    ./nvidia.nix # RTX 4070 Super 驱动
   ];
 
   # ── 主机身份 ────────────────────────────────────────────────────────
-  networking.hostName = myvars.hostname;   # 由 mkSystem 注入，与 flake.nix 单一来源
+  networking.hostName = myvars.hostname; # 由 mkSystem 注入，与 flake.nix 单一来源
 
   # kvm_intel 已在 hardware-configuration.nix 中声明，此处不重复
   environment.systemPackages = with pkgs; [
@@ -21,7 +21,7 @@
   };
 
   # ── 模块开关（与笔记本共用 desktop/base 模块） ────────────────────
-  modules.desktop.winboat.enable = true;   # WinBoat（容器化 Windows VM）
+  modules.desktop.winboat.enable = true; # WinBoat（容器化 Windows VM）
   modules.desktop.hermes-access.enable = true;
   modules.desktop.noctalia.enable = true;
   modules.desktop.gaming.enable = true;

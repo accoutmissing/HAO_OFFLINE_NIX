@@ -1,4 +1,4 @@
-{ }:
+_:
 let
   # CI 可通过环境变量提供不可登录的占位哈希；真实安装将 yescrypt 哈希写入
   # gitignored 的 vars/secrets.nix（initialHashedPassword 字段）。

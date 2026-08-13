@@ -6,7 +6,7 @@
 #
 # i5-13600KF（Raptor Lake）+ Z790 + RTX 4070 Super
 
-{ config, lib, pkgs, modulesPath, ... }:
+{ config, lib, modulesPath, ... }:
 
 {
   imports = [

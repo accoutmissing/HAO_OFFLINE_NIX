@@ -1,7 +1,7 @@
-{ lib, pkgs, myvars, ... }:
+{ pkgs, myvars, ... }:
 {
   home = {
-    username = myvars.username;
+    inherit (myvars) username;
     homeDirectory = "/home/${myvars.username}";
     stateVersion = "26.05";
   };
@@ -9,14 +9,14 @@
   # 用户级包
   home.packages = with pkgs; [
     # 开发
-    pnpm_11                   # pnpm（显式锁定版本，避免 nixpkgs 别名变化）
-    yarn                      # Yarn classic v1
+    pnpm_11 # pnpm（显式锁定版本，避免 nixpkgs 别名变化）
+    yarn # Yarn classic v1
 
     # 工具
-    bat                       # cat 替代（zsh alias cat=bat）
+    bat # cat 替代（zsh alias cat=bat）
     lazygit
-    delta                     # git diff 高亮
-    gh                        # GitHub CLI
+    delta # git diff 高亮
+    gh # GitHub CLI
   ];
 
   # Git 配置

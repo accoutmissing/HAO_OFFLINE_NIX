@@ -7,8 +7,7 @@ let
   hasHardwareConfig = builtins.pathExists ./hardware-configuration.nix;
 in
 {
-  imports = []
-    ++ lib.optionals hasHardwareConfig [ ./hardware-configuration.nix ]
+  imports = lib.optionals hasHardwareConfig [ ./hardware-configuration.nix ]
     ++ [ ./optimus.nix ];
 
   # ── 主机身份 ────────────────────────────────────────────────────────
@@ -40,11 +39,11 @@ in
   boot.kernelModules = [ "kvm_intel" ];
 
   environment.systemPackages = with pkgs; [
-    powertop         # 电源诊断
+    powertop # 电源诊断
   ];
 
-  services.thermald.enable = true;      # Intel CPU 温度管理
-  services.tlp.enable = true;           # 电池优化
+  services.thermald.enable = true; # Intel CPU 温度管理
+  services.tlp.enable = true; # 电池优化
 
   # ── Noctalia 省电模式（笔记本） ─────────────────────────────────────
   home-manager.users.${myvars.username}.programs.noctalia-shell.settings.noctaliaPerformance = {

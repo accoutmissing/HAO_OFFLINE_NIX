@@ -1,10 +1,10 @@
-{ pkgs, ... }:
+_:
 {
   # 容器
   virtualisation = {
     podman = {
       enable = true;
-      dockerCompat = true;    # 兼容 docker 命令
+      dockerCompat = true; # 兼容 docker 命令
       defaultNetwork.settings.dns_enabled = true;
     };
 
