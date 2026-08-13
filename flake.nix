@@ -101,7 +101,7 @@
       devShells.${system}.default = pkgs.mkShell {
         name = "nixos-config";
         buildInputs = [
-          treefmtEval.config.build.formatter
+          treefmtEval.config.build.wrapper
           pkgs.statix
           pkgs.deadnix
         ];
