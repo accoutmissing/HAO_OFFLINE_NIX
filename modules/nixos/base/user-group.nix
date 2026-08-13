@@ -8,11 +8,12 @@
     {
       assertion = myvars.initialHashedPassword != null;
       message = ''
-        ⛔ 安全阻止：vars/default.nix 中 initialHashedPassword = null，且 mutableUsers = false。
+        ⛔ 安全阻止：initialHashedPassword 未设置（null），且 mutableUsers = false。
 
         这会在安装后导致无法登录，且无法用 passwd 修改密码。
 
-        → 请用 mkpasswd -m yescrypt 生成哈希，填入 vars/default.nix
+        → 请用 mkpasswd -m yescrypt 生成哈希，
+          填入 vars/secrets.nix 的 initialHashedPassword（参考 vars/secrets.example.nix）
       '';
     }
   ];
@@ -26,6 +27,7 @@
       "networkmanager"
       "podman"
       "libvirtd"
+      "systemd-journal"  # 只读访问全部系统日志（远程调试 journalctl 用）
     ];
     shell = pkgs.zsh;
   };

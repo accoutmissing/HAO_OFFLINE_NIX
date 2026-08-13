@@ -16,7 +16,8 @@ fi
 
 echo ""
 echo "📝 接下来编辑 $TARGET："
-echo "   1. 把 REPLACE_WITH_YOUR_SECRET 换成 EasyTier 密钥"
-echo "   2. 把 <YOUR_VPS_IP> 换成 VPS 实际地址"
+echo "   1. 把 initialHashedPassword = null 换成 mkpasswd -m yescrypt 生成的哈希（必须！否则无法登录）"
+echo "   2. 把 REPLACE_WITH_YOUR_SECRET 换成 EasyTier 密钥"
+echo "   3. 把 <YOUR_VPS_IP> 换成 VPS 实际地址"
 echo ""
 echo "   vim vars/secrets.nix"

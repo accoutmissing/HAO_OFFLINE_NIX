@@ -10,7 +10,9 @@
       substituters = myvars.cachixSubstituters;
       trusted-public-keys = myvars.cachixTrustedPublicKeys;
 
-      # 关闭 auto-optimise：Nix 2.20+ 此选项会导致每次 rebuild 严重变慢
+      # 关闭 auto-optimise：2.20 及更早的实现（in-place hardlink 修改）
+      # 会让每次 rebuild 明显变慢；2.21+ 已重写实现，官方推荐开启，
+      # 但个人实测仍保持关闭，如想试可改回 true 观察 rebuild 耗时。
       auto-optimise-store = false;
 
       experimental-features = [ "nix-command" "flakes" ];

@@ -18,15 +18,15 @@ in
       {
         users = [ myvars.username ];
         commands = [
-          # 必须用 /run/current-system/sw/bin 路径——sudoers 按字面路径匹配、
-          # 不解析 symlink，写 /nix/store/... 会匹配不上 PATH 里的命令。
+          # 必须用 /run/current-system/sw/bin 稳定路径：sudo 会把规则路径与
+          # 实际命令都解析到真实 store 路径后比较，写死 /nix/store/...
+          # 会因每次 rebuild 哈希变化而失配。
           # systemctl 不可无限制 NOPASSWD（`systemctl edit` 可逃逸拿 root shell），
-          # 只放行远程管理必要的动词。
+          # 只放行远程调试必要的动词；status 普通用户本就可查，不放行。
           { command = "/run/current-system/sw/bin/nixos-rebuild"; options = [ "NOPASSWD" ]; }
           { command = "/run/current-system/sw/bin/systemctl start *"; options = [ "NOPASSWD" ]; }
           { command = "/run/current-system/sw/bin/systemctl stop *"; options = [ "NOPASSWD" ]; }
           { command = "/run/current-system/sw/bin/systemctl restart *"; options = [ "NOPASSWD" ]; }
-          { command = "/run/current-system/sw/bin/systemctl status *"; options = [ "NOPASSWD" ]; }
           { command = "/run/current-system/sw/bin/systemctl daemon-reload"; options = [ "NOPASSWD" ]; }
         ];
       }

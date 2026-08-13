@@ -193,7 +193,17 @@ cd HAO_OFFLINE_NIX
 
 #### A-2：设置你的登录密码
 
-装好系统后，你需要一个密码才能登录桌面。现在就设好：
+装好系统后，你需要一个密码才能登录桌面。现在就设好。
+
+先复制一份本地密钥模板（如果还没有）：
+
+```bash
+bash scripts/setup.sh
+```
+
+（脚本会创建 `vars/secrets.nix` —— 这个文件是本地专属、不会被上传到 GitHub，密码放这里才安全。）
+
+然后生成密码哈希：
 
 ```bash
 mkpasswd -m yescrypt
@@ -201,10 +211,10 @@ mkpasswd -m yescrypt
 
 - 输入你想要的密码（**输入时屏幕不会显示任何东西，这是正常的**）
 - 输入两次后，屏幕上会出现一串以 `$y$` 开头的乱码——**把它复制下来**
-- 然后编辑配置文件：
+- 然后编辑本地密钥文件：
 
 ```bash
-nano vars/default.nix
+nano vars/secrets.nix
 ```
 
 - 用方向键往下移动，找到这一行：
@@ -336,15 +346,19 @@ cd HAO_OFFLINE_NIX
 
 #### B-4：设置登录密码
 
-和方案 A 的 A-2 步骤完全一样：用 `mkpasswd -m yescrypt` 生成密码，写入 `vars/default.nix`。
+和方案 A 的 A-2 步骤完全一样：用 `mkpasswd -m yescrypt` 生成密码，写入 `vars/secrets.nix` 的 `initialHashedPassword`。
 
 #### B-5：手动创建 NixOS 分区
 
 假设空出来的空间在 `/dev/nvme0n1` 上，是最后一个分区号（这里用 `p5` 举例，**以你 `lsblk` 实际看到的为准**）：
 
 ```bash
-# 创建 Btrfs 分区（用掉剩下的所有空间）
-sudo parted /dev/nvme0n1 -- mkpart primary btrfs 50% 100%
+# 创建 Btrfs 分区——起止点必须按你 lsblk 看到的“实际空闲区间”填！
+# ⚠️ 不要照抄下面的数字，这是示例：假设磁盘 500GB，Windows 占前 300GB
+#    （约 0~300GB），恢复分区在末尾（约 480~500GB），空闲区就是 300~480GB。
+#    下面的 mkfs 里 p5 也要换成 lsblk 显示的实际分区号。
+# 🔴 起点数字不要写进 Windows 分区范围内！拿不准就用 Windows 的磁盘管理确认。
+sudo parted /dev/nvme0n1 -- mkpart NIXOS btrfs 300GiB 480GiB
 
 # 格式化，取名叫 NIXOS
 sudo mkfs.btrfs -L NIXOS /dev/nvme0n1p5
@@ -436,8 +450,9 @@ git clone -b HAO_SERVER https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /et
 cd /etc/nixos
 
 # 1. 填入密码哈希 + EasyTier 密钥（必做）
-#    mkpasswd -m yescrypt 生成后写入 vars/default.nix
-#    复制 vars/secrets.example.nix → vars/secrets.nix
+#    bash scripts/setup.sh（复制 secrets 模板）
+#    mkpasswd -m yescrypt 生成后写入 vars/secrets.nix 的 initialHashedPassword
+#    同一文件里填好 EasyTier 密钥与 peers
 
 # 2. 生成硬件配置并强制跟踪
 sudo nixos-generate-config --root /mnt

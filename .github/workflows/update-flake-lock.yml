@@ -1,0 +1,34 @@
+# 每周自动更新 flake.lock 并创建 PR
+# 仓库首次缺少 flake.lock 时，本 workflow 第一次运行就会补上；
+# 之后每周跟随 nixpkgs-unstable / home-manager 上游刷新一次。
+# 合并 PR 前 CI（check.yml）会先跑通，上游破坏性变更可提前发现。
+name: update-flake-lock
+
+on:
+  workflow_dispatch: # 手动触发
+  schedule:
+    - cron: "0 8 * * 0" # 每周日 08:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: DeterminateSystems/update-flake-lock@v24
+        with:
+          pr-title: "chore: update flake.lock"
+          pr-labels: |
+            dependencies
+          pr-body: |
+            自动更新 flake.lock（nixpkgs-unstable / home-manager / disko / noctalia / treefmt-nix）。
+
+            - 本 PR 由 update-flake-lock workflow 生成
+            - 合并前请确认 CI 检查通过
+            - 如需本地生成：`nix flake lock`

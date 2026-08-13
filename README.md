@@ -45,6 +45,10 @@ nix flake show
 # 验证配置能解析
 nix flake check
 
+# 首次使用 / 升级依赖后：生成或更新 flake.lock 并提交（保证可复现）
+nix flake lock
+git add flake.lock && git commit -m "chore: update flake.lock"
+
 # 更新系统（拉到最新 + 部署）
 sudo nixos-rebuild switch --flake .#
 

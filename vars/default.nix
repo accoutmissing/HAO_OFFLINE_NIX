@@ -1,10 +1,14 @@
 { }:
 let
-  # CI 可通过环境变量提供不可登录的占位哈希；真实安装仍需在本文件写入 yescrypt 哈希。
+  # CI 可通过环境变量提供不可登录的占位哈希；真实安装将 yescrypt 哈希写入
+  # gitignored 的 vars/secrets.nix（initialHashedPassword 字段）。
   # builtins.getEnv 只用于 CI assertion，不应承载真实密钥。
   ciPasswordHash = builtins.getEnv "CI_PASSWORD_HASH";
 
   # ── 二进制缓存（flake.nix nixConfig 与 base/nix.nix 共用） ──────
+  # 注意：清华/中科大的 nix-channels/store 只缓存 channel tarball，
+  # 对 nixpkgs 构建产物几乎无命中（真正的构建缓存是 cache.nixos.org）；
+  # 保留仅供 channel 场景，不要指望它给普通构建加速。
   cachixSubstituters = [
     "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
     "https://mirrors.ustc.edu.cn/nix-channels/store"
@@ -33,10 +37,12 @@ in
 
   # 初始密码（安装后首次登录用，需立即修改）
   # 生成: mkpasswd -m yescrypt
+  # 哈希放在 gitignored 的 secrets.nix（勿提交到公开仓库，避免离线爆破）；
   # CI 可通过 CI_PASSWORD_HASH + --impure 注入不可登录的占位值；
   # 正常安装不设置该环境变量，null assertion 会强制用户填写真实哈希。
   initialHashedPassword =
-    if ciPasswordHash != "" then ciPasswordHash else null; # null = 安装前必须设置
+    if ciPasswordHash != "" then ciPasswordHash
+    else secrets.initialHashedPassword or null; # null = 安装前必须设置
 
   # SSH 公钥（用于远程部署和管理）
   mainSshAuthorizedKeys = [
