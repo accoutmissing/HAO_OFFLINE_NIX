@@ -4,7 +4,7 @@
   services.greetd.enable = lib.mkDefault true;
   # ReGreet 作为 greeter（自动填充 greetd.settings.default_session；
   # 只开 greetd.enable 不配 greeter 会导致 settings 未定义，eval 报错）
-  programs.regreet.enable = lib.mkDefault true;
+  services.displayManager.regreet.enable = lib.mkDefault true;
   # greetd 崩溃后不自动重启，避免与 Niri session 重启逻辑冲突
   services.greetd.restart = false;
 

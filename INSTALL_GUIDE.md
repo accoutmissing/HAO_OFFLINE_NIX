@@ -187,7 +187,7 @@ sda        14.8G disk     ← 这是你的 U 盘
 
 ```bash
 nix-shell -p git
-git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch v1.2.2 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
@@ -240,7 +240,7 @@ nano vars/secrets.nix
 #### A-4：自动分区（一条命令搞定）
 
 ```bash
-sudo nix run github:accoutmissing/HAO_OFFLINE_NIX#disko -- \
+sudo nix run github:accoutmissing/HAO_OFFLINE_NIX/v1.2.2#disko -- \
   --mode disko hosts/HAO_DESKTOP/disko-config.nix
 ```
 
@@ -282,7 +282,7 @@ sudo nixos-install --flake .#HAO_DESKTOP
 - 看到满屏文字在跑 → 正常，等着
 - 停在同一行很久 → 也在下载，别急
 - 屏幕偶尔出现方块乱码 → 不影响，继续等
-- 最后会提示你设置 root 密码 → 输入一个密码（记好！），回车
+- 安装完成后请使用前面写入 `vars/secrets.nix` 的 `feng` 用户密码登录；root 已按配置锁定，不应依赖 root 密码登录
 
 看到 `安装完成` 或类似的提示后，输入：
 
@@ -340,7 +340,7 @@ nvme0n1          ← 整块硬盘
 
 ```bash
 nix-shell -p git
-git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch v1.2.2 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
@@ -409,7 +409,7 @@ nano hosts/HAO_DESKTOP/hardware-configuration.nix
 sudo nixos-install --flake .#HAO_DESKTOP
 ```
 
-等 10-30 分钟，提示输入 root 密码后，重启：
+等 10-30 分钟，安装完成后重启；登录时使用前面配置的 `feng` 用户密码：
 
 ```bash
 sudo reboot
@@ -486,7 +486,7 @@ sudo nixos-rebuild switch --flake .#HAO_SERVER
 打开终端（启动器里搜 "kitty" 或 "terminal"），运行：
 
 ```bash
-sudo git clone https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
+sudo git clone --branch v1.2.2 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
 cd /etc/nixos
 ```
 
