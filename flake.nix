@@ -30,11 +30,17 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # NixOS on Windows WSL（借鉴 nix-community/NixOS-WSL）
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   # ── 输出 ────────────────────────────────────────────────────────────
   outputs =
-    { self, nixpkgs, home-manager, disko, treefmt-nix, ... }@inputs:
+    { self, nixpkgs, home-manager, disko, treefmt-nix, noctalia, nixos-wsl, ... }@inputs:
     let
       inherit (nixpkgs) lib;
       system = "x86_64-linux";
@@ -89,6 +95,19 @@
         HAO_OFFLINE = mkSystem "HAO_OFFLINE" [ ];
         HAO_DESKTOP = mkSystem "HAO_DESKTOP" [ ];
         HAO_HYPERV = mkSystem "HAO_HYPERV" [ ];
+
+        # Windows WSL 测试环境（无引导/无桌面，精简配置）
+        HAO_WSL = lib.nixosSystem {
+          inherit system;
+          specialArgs = inputs // {
+            inherit inputs mylib system;
+            myvars = myvars // { hostname = "HAO_WSL"; };
+          };
+          modules = [
+            nixos-wsl.nixosModules.default
+            ./hosts/HAO_WSL
+          ];
+        };
       };
 
       # ── 安装工具 ──────────────────────────────────────────────────────

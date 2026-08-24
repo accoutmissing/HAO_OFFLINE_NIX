@@ -20,6 +20,7 @@
 | 🔄 系统 | Btrfs + zstd 压缩 + zram + 每周自动 GC |
 | 🇨🇳 国内优化 | 清华/中科大镜像 + 超时优化 |
 | 🔧 CI | GitHub Actions `nix flake check` + 三主机 eval |
+=======
 
 ## 🖥️ 主机一览
 
@@ -28,6 +29,7 @@
 | **HAO_OFFLINE** | 神舟战神 Z7-KP7Z | main | i7-8750H + GTX 1060，Optimus 按需调用 |
 | **HAO_DESKTOP** | 自组台式机 | main | i5-13600KF + RTX 4070S，独显常开 |
 | **HAO_HYPERV** | Hyper-V Gen 2 | main | 虚拟机，无 GPU，验证桌面壳层 |
+| **HAO_WSL** | Windows WSL2 | main | 无引导/无桌面精简配置，快速验证 flake |
 | **HAO_SERVER** | 家庭服务器 / VPS | **HAO_SERVER** | 无头服务器，fail2ban + 容器 + 自动更新 |
 
 ## 🚀 快速开始
