@@ -24,9 +24,9 @@ jobs:
       - run: nix flake check --impure
 
       # 验证三台主机的系统闭包能完整求值（只 eval 不构建，比 nix build 轻）
-      # 注意：HAO_OFFLINE / HAO_HYPERV 的 hardware-configuration.nix 在仓库中
+      # 注意：HAO_OFFLINE 的 hardware-configuration.nix 在仓库中
       # 不存在（安装时生成），CI 验证的是“无硬件配置”形态，
       # 不等于真机可装；真机安装前务必 git add -f 硬件配置
       - run: nix eval --impure .#nixosConfigurations.HAO_DESKTOP.config.system.build.toplevel.drvPath
       - run: nix eval --impure .#nixosConfigurations.HAO_OFFLINE.config.system.build.toplevel.drvPath
-      - run: nix eval --impure .#nixosConfigurations.HAO_HYPERV.config.system.build.toplevel.drvPath
+      - run: nix eval --impure .#nixosConfigurations.HAO_WSL.config.system.build.toplevel.drvPath

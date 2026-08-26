@@ -7,7 +7,7 @@
 # 首次进入后先初始化：
 #   sudo nixos-generate-config --no-filesystem  # 不需要，模块已内置
 # 直接用本 flake 构建：
-#   sudo nixos-rebuild switch --flake github:accoutmissing/nixos#HAO_WSL
+#   sudo nixos-rebuild switch --flake github:accoutmissing/HAO_OFFLINE_NIX#HAO_WSL
 
 { lib, pkgs, ... }:
 

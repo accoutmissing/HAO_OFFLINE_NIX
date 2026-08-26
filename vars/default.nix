@@ -1,7 +1,7 @@
 _:
 let
   # CI 可通过环境变量提供不可登录的占位哈希；真实安装将 yescrypt 哈希写入
-  # gitignored 的 vars/secrets.nix（initialHashedPassword 字段）。
+  # 仓库外的 secrets 文件（initialHashedPassword 字段）。
   # builtins.getEnv 只用于 CI assertion，不应承载真实密钥。
   ciPasswordHash = builtins.getEnv "CI_PASSWORD_HASH";
 
@@ -23,8 +23,12 @@ let
     "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
   ];
 
-  # 导入机器专属密钥（复制 secrets.example.nix → secrets.nix 填入实际值）
-  secretsFile = ./secrets.nix;
+  # Git flake 不会携带被 .gitignore 排除的文件，因此 secrets 必须通过
+  # HAO_SECRETS_FILE 指向仓库外的本地文件，并使用 `--impure` 求值。
+  # 未设置时保留相对路径，方便非 Git 目录和本地调试使用。
+  secretsPath = builtins.getEnv "HAO_SECRETS_FILE";
+  secretsFile =
+    if secretsPath != "" then builtins.toPath secretsPath else ./secrets.nix;
   secrets = if builtins.pathExists secretsFile then import secretsFile else { };
 in
 {
@@ -37,9 +41,9 @@ in
 
   # 初始密码（安装后首次登录用，需立即修改）
   # 生成: mkpasswd -m yescrypt
-  # 哈希放在 gitignored 的 secrets.nix（勿提交到公开仓库，避免离线爆破）；
+  # 哈希放在仓库外的 secrets.nix（勿提交到公开仓库，避免离线爆破）；
   # CI 可通过 CI_PASSWORD_HASH + --impure 注入不可登录的占位值；
-  # 正常安装不设置该环境变量，null assertion 会强制用户填写真实哈希。
+  # 正常安装需设置 HAO_SECRETS_FILE 并使用 --impure，null assertion 会强制用户填写真实哈希。
   initialHashedPassword =
     if ciPasswordHash != "" then ciPasswordHash
     else secrets.initialHashedPassword or null; # null = 安装前必须设置
@@ -59,7 +63,7 @@ in
     # "ssh-ed25519 AAAA...hermes-cloud-key"
   ];
 
-  # ── EasyTier 密钥（来自 gitignored secrets.nix，缺失时用空值降级） ──
+  # ── EasyTier 密钥（来自外部 secrets 文件，缺失时用空值降级） ──
   easytierNetworkSecret = secrets.easytierNetworkSecret or null; # deadnix: skip
   easytierPeers = secrets.easytierPeers or [ ]; # deadnix: skip
 
