@@ -94,7 +94,6 @@
       nixosConfigurations = {
         HAO_OFFLINE = mkSystem "HAO_OFFLINE" [ ];
         HAO_DESKTOP = mkSystem "HAO_DESKTOP" [ ];
-        HAO_HYPERV = mkSystem "HAO_HYPERV" [ ];
 
         # Windows WSL 测试环境（无引导/无桌面，精简配置）
         HAO_WSL = lib.nixosSystem {

@@ -32,7 +32,7 @@
     shell = pkgs.zsh;
 
     # 主人主密钥 + 备份密钥在 base 层挂载，保证未启用 hermes-access 的
-    # 主机（如 HAO_HYPERV）也能 SSH 登录
+    # 虚拟机主机（如 HAO_WSL）也能 SSH 登录
     openssh.authorizedKeys.keys =
       myvars.mainSshAuthorizedKeys ++ myvars.backupSshAuthorizedKeys;
   };

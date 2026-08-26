@@ -6,7 +6,7 @@
 
 | 类别 | 内容 |
 |------|------|
-| 🖥️ 主机 | HAO_OFFLINE（笔记本 i7-8750H + GTX 1060）/ HAO_DESKTOP（台式机 i5-13600KF + RTX 4070S）/ HAO_HYPERV（虚拟机）/ HAO_SERVER（服务器，独立分支） |
+| 🖥️ 主机 | HAO_OFFLINE（笔记本 i7-8750H + GTX 1060）/ HAO_DESKTOP（台式机 i5-13600KF + RTX 4070S）/ HAO_SERVER（服务器，独立分支） |
 | 🪟 桌面 | Niri（滚动平铺 Wayland）+ Noctalia 壳层（bar/dock/启动器/锁屏）+ ReGreet 图形登录 |
 | 🔤 中文输入 | Fcitx5 + Rime |
 | 🎨 设计 | GIMP / Inkscape / Krita / Blender 全套 |
@@ -27,7 +27,6 @@
 |------|------|------|------|
 | **HAO_OFFLINE** | 神舟战神 Z7-KP7Z | main | i7-8750H + GTX 1060，Optimus 按需调用 |
 | **HAO_DESKTOP** | 自组台式机 | main | i5-13600KF + RTX 4070S，独显常开 |
-| **HAO_HYPERV** | Hyper-V Gen 2 | main | 虚拟机，无 GPU，验证桌面壳层 |
 | **HAO_WSL** | Windows WSL2 | main | 无引导/无桌面精简配置，快速验证 flake |
 | **HAO_SERVER** | 家庭服务器 / VPS | **HAO_SERVER** | 无头服务器，fail2ban + 容器 + 自动更新 |
 
