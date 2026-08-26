@@ -21,7 +21,6 @@
   };
 
   # ── 模块开关（与笔记本共用 desktop/base 模块） ────────────────────
-  modules.desktop.winboat.enable = true; # WinBoat（容器化 Windows VM）
   modules.desktop.hermes-access.enable = true;
   modules.desktop.noctalia.enable = true;
   modules.desktop.gaming.enable = true;

@@ -13,8 +13,7 @@
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
 | 🎮 游戏 | Steam + Lutris + GameMode + MangoHud + Gamescope |
 | 💬 通讯 | QQ / 微信（Linux 原生） |
-| 🖥️ Windows 应用 | WinBoat 容器化 Windows VM（可选模块，仅台式机） |
-| 🌐 网络 | EasyTier P2P 组网 + Clash Verge 代理 |
+| 🖥️ Windows 应用 | KVM/QEMU Windows VM（virt-manager / quickemu，swtpm + OVMF） || 🌐 网络 | EasyTier P2P 组网 + Clash Verge 代理 |
 | 🐳 容器 | Podman（docker 兼容）+ libvirtd KVM |
 | 🔒 安全 | SSH 禁密码 + root 锁定 + 密码 null assertion + secrets gitignored |
 | 🔄 系统 | Btrfs + zstd 压缩 + zram + 每周自动 GC |
