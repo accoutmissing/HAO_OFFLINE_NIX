@@ -2,7 +2,7 @@ name: check
 
 on:
   push:
-    branches: [main]
+    branches: [main, codex/format-diagnostics]
   pull_request:
     branches: [main]
 
@@ -16,8 +16,13 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 禁止 CI 临时补写锁文件；flake.nix 新增输入后必须同步提交 flake.lock。
-      - run: nix flake check --no-write-lock-file
+      # 临时诊断分支：输出仓库格式化器产生的精确差异。
+      - name: Show formatter changes
+        run: |
+          nix fmt -- --verbose || true
+          git status --short
+          git diff -- .
+          exit 1
 
       # 验证三台主机的系统闭包能完整求值（只 eval 不构建，比 nix build 轻）
       # 注意：HAO_OFFLINE 的 hardware-configuration.nix 在仓库中
