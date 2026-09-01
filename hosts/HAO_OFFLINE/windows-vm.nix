@@ -16,7 +16,6 @@
     qemu = {
       package = pkgs.qemu_kvm;
       swtpm.enable = true; # Windows 11 强制要求 TPM 2.0
-      ovmf.packages = [ pkgs.OVMFFull.fd ]; # UEFI 启动（含 Secure Boot 变体）
     };
   };
 
