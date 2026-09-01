@@ -59,8 +59,10 @@ in
   };
 
   # 合盖不休眠由 logind 兜底（TLP 不接管 logind）
-  services.logind.lidSwitch = "ignore";
-  services.logind.lidSwitchExternalPower = "ignore";
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore";
+    HandleLidSwitchExternalPower = "ignore";
+  };
 
   # ── Noctalia 省电模式（笔记本） ─────────────────────────────────────
   home-manager.users.${myvars.username}.programs.noctalia-shell.settings.noctaliaPerformance = {
