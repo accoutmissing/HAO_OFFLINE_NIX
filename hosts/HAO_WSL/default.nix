@@ -57,7 +57,8 @@
     "nix-community.cachix.org-1:4BzitgziQkMCO+4QhMhVA8Wp9T5IhzsaCqPCU3c1gQ8="
   ];
 
-  # WSL 不需要这些
-  security.sudo.wheelNeedsPassword = true;
+  # 这是 Agent 调试环境；feng 没有声明登录密码，因此保留 passwordless sudo，
+  # 避免首次切换配置后无法继续管理系统。
+  security.sudo.wheelNeedsPassword = false;
   system.stateVersion = "25.05";
 }

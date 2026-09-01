@@ -1,6 +1,6 @@
 # 🖥️ HAO NixOS 配置
 
-一套 **Flake + Home Manager** 管理的 NixOS 配置，覆盖 **笔记本 + 台式机 + 虚拟机 + 服务器** 四种场景，多台设备共享一套配置，各自只写硬件差异。
+一套 **Flake + Home Manager** 管理的 NixOS 配置，覆盖 **笔记本 + 台式机 + WSL + 服务器** 四种场景，多台设备共享一套配置，各自只写硬件差异。
 
 ## ✨ 配置特点
 
@@ -13,13 +13,13 @@
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
 | 🎮 游戏 | Steam + Lutris + GameMode + MangoHud + Gamescope |
 | 💬 通讯 | QQ / 微信（Linux 原生） |
-| 🖥️ Windows 应用 | KVM/QEMU Windows VM（virt-manager / quickemu，swtpm + OVMF） || 🌐 网络 | EasyTier P2P 组网 + Clash Verge 代理 |
+| 🖥️ Windows 应用 | KVM/QEMU Windows VM（virt-manager / quickemu，swtpm + OVMF） |
+| 🌐 网络 | EasyTier P2P 组网 + Clash Verge 代理 |
 | 🐳 容器 | Podman（docker 兼容）+ libvirtd KVM |
-| 🔒 安全 | SSH 禁密码 + root 锁定 + 密码 null assertion + secrets gitignored |
+| 🔒 安全 | SSH 禁密码 + root 锁定 + root-only 运行时 secrets（不进 Git / Nix store） |
 | 🔄 系统 | Btrfs + zstd 压缩 + zram + 每周自动 GC |
 | 🇨🇳 国内优化 | 清华/中科大镜像 + 超时优化 |
 | 🔧 CI | GitHub Actions `nix flake check` + 三主机 eval |
-=======
 
 ## 🖥️ 主机一览
 
@@ -42,15 +42,15 @@
 # 查看仓库定义
 nix flake show
 
-# 验证配置能解析
-nix flake check
+# 验证配置能解析，并确保 flake.lock 没有漏项
+nix flake check --no-write-lock-file
 
 # 首次使用 / 升级依赖后：生成或更新 flake.lock 并提交（保证可复现）
 nix flake lock
 git add flake.lock && git commit -m "chore: update flake.lock"
 
-# 更新系统（拉到最新 + 部署）
-sudo nixos-rebuild switch --flake .#
+# 更新系统（先确认 /var/lib/hao-secrets/feng-password-hash 已安装）
+sudo nixos-rebuild switch --flake .#HAO_DESKTOP
 
 # 回滚到上一个版本
 sudo nixos-rebuild switch --rollback

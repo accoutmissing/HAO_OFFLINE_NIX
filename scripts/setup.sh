@@ -1,28 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 首次配置：复制 secrets 模板，提示填入真实值
+# 首次配置：创建不会被 Git 跟踪的本地 secrets 暂存目录。
 
-SECRETS_DIR="$(cd "$(dirname "$0")/../vars" && pwd)"
-TEMPLATE="$SECRETS_DIR/secrets.example.nix"
-TARGET="$SECRETS_DIR/secrets.nix"
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SECRETS_DIR="$REPO_ROOT/secrets"
+EXAMPLE_DIR="$REPO_ROOT/secrets.example"
+PASSWORD_FILE="$SECRETS_DIR/feng-password-hash"
+EASYTIER_FILE="$SECRETS_DIR/easytier.env"
 
-if [ -f "$TARGET" ]; then
-  echo "✓ secrets.nix 已存在，跳过"
-else
-  cp "$TEMPLATE" "$TARGET"
-  echo "✓ 已创建 $TARGET"
+install -d -m 700 "$SECRETS_DIR"
+
+if [ ! -e "$PASSWORD_FILE" ]; then
+  : > "$PASSWORD_FILE"
+  chmod 600 "$PASSWORD_FILE"
+  echo "✓ 已创建空密码哈希文件 $PASSWORD_FILE"
 fi
 
-# 密钥文件包含密码哈希和 EasyTier 网络密钥，不应被同机其他用户读取。
-chmod 600 "$TARGET"
+if [ ! -e "$EASYTIER_FILE" ]; then
+  cp "$EXAMPLE_DIR/easytier.env" "$EASYTIER_FILE"
+  chmod 600 "$EASYTIER_FILE"
+  echo "✓ 已创建 EasyTier 环境文件 $EASYTIER_FILE"
+fi
+
+chmod 600 "$PASSWORD_FILE" "$EASYTIER_FILE"
 
 echo ""
-echo "📝 接下来编辑 $TARGET："
-echo "   1. 把 initialHashedPassword = null 换成 mkpasswd -m yescrypt 生成的哈希（必须！否则无法登录）"
-echo "   2. 如需启用 EasyTier，再填入真实网络密钥和 peers；默认保持 null 以关闭服务"
+echo "📝 接下来："
+echo "   1. 执行 mkpasswd -m yescrypt > \"$PASSWORD_FILE\"（必须，否则无法登录）"
+echo "   2. 如需 EasyTier，编辑 $EASYTIER_FILE；不用时保留 CHANGE_ME"
 echo "   3. 如启用 hermes-access，把 Hermes 云端公钥填入 vars/default.nix 的 hermesSshAuthorizedKeys"
-echo "   4. 当前 shell 执行：export HAO_SECRETS_FILE=\"$TARGET\""
-echo "   5. 后续 nixos 命令加 --impure，并用 sudo --preserve-env=HAO_SECRETS_FILE"
+echo "   4. 当前系统安装：sudo bash scripts/install-secrets.sh"
+echo "      NixOS 安装盘目标：sudo bash scripts/install-secrets.sh /mnt"
 echo ""
-echo "   vim vars/secrets.nix"
+echo "   密钥安装后位于 /var/lib/hao-secrets，仅 root 可读。"

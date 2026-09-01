@@ -37,16 +37,15 @@ in
 
     # ── EasyTier 组网 ───────────────────────────────────────────────────
     # 与 VPS Hermes 建立 P2P 虚拟网络（IP 自动分配）
-    # 密钥和 peer 列表来自 vars/secrets.nix（gitignored），
-    # 公开仓库用户复制 vars/secrets.example.nix → vars/secrets.nix 填入实际值
-    # EasyTier 缺少密钥时不启用服务，也不创建实例（避免向非空字符串选项传 null）
-    services.easytier = lib.mkIf (myvars.easytierNetworkSecret != null) {
+    # 密钥和 peer 由 root-only EnvironmentFile 在服务启动时注入，既不进入 Git，
+    # 也不进入 world-readable Nix store。文件缺失时 ConditionPathExists 会跳过服务。
+    services.easytier = {
       enable = true;
 
       instances.hao_link = {
+        environmentFiles = [ myvars.easytierEnvironmentFile ];
         settings = {
           network_name = "hao_link";
-          network_secret = myvars.easytierNetworkSecret;
           dhcp = true;
           inherit (myvars) hostname;
 
@@ -54,15 +53,16 @@ in
             "tcp://0.0.0.0:11010"
             "udp://0.0.0.0:11010"
           ];
-
-          peers = myvars.easytierPeers;
         };
       };
     };
 
+    systemd.services.easytier-hao_link.unitConfig.ConditionPathExists =
+      myvars.easytierEnvironmentFile;
+
     # ── 防火墙 ──────────────────────────────────────────────────────────
-    networking.firewall = lib.mkIf (myvars.easytierNetworkSecret != null) {
-      # 仅在 EasyTier 实际启用时放行端口，避免无条件暴露 11010
+    networking.firewall = {
+      # 密钥文件缺失时服务不会监听；存在时允许 EasyTier 建立 P2P 连接。
       allowedTCPPorts = [ 11010 ];
       allowedUDPPorts = [ 11010 ];
     };

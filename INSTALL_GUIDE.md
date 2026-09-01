@@ -187,7 +187,7 @@ sda        14.8G disk     ← 这是你的 U 盘
 
 ```bash
 nix-shell -p git
-git clone --branch v1.2.2 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch v1.2.3 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
@@ -195,46 +195,31 @@ cd HAO_OFFLINE_NIX
 
 装好系统后，你需要一个密码才能登录桌面。现在就设好。
 
-先复制一份本地密钥模板（如果还没有）：
+先创建不会被 Git 跟踪的本地密钥暂存目录：
 
 ```bash
 bash scripts/setup.sh
 ```
 
-（脚本会创建 `vars/secrets.nix`。它是本地专属、不会被上传到 GitHub；由于 Git flake 不读取被忽略文件，后面必须通过环境变量指定它。）
+脚本会创建 `secrets/feng-password-hash` 和 `secrets/easytier.env`。这些文件只用于暂存，整个 `secrets/` 目录都不会上传到 GitHub。
 
 然后生成密码哈希：
 
 ```bash
-mkpasswd -m yescrypt
+mkpasswd -m yescrypt > secrets/feng-password-hash
 ```
 
 - 输入你想要的密码（**输入时屏幕不会显示任何东西，这是正常的**）
-- 输入两次后，屏幕上会出现一串以 `$y$` 开头的乱码——**把它复制下来**
-- 然后编辑本地密钥文件：
+- 输入完成后，生成的 `$y$...` 哈希会直接写入本地暂存文件。
+- 如需启用 EasyTier，再编辑环境文件：
 
 ```bash
-nano vars/secrets.nix
+nano secrets/easytier.env
 ```
 
-保存后，在当前终端设置 secrets 路径：
+把 `ET_NETWORK_SECRET=CHANGE_ME` 换成真实密钥；多个 peer 填入 `ET_PEERS=`，用英文逗号分隔。不使用 EasyTier 就不要改 `CHANGE_ME`，安装脚本会保持服务关闭。
 
-```bash
-export HAO_SECRETS_FILE="$PWD/vars/secrets.nix"
-```
-
-后续所有 `nixos-install` / `nixos-rebuild` 命令都要加 `--impure`，并使用
-`sudo --preserve-env=HAO_SECRETS_FILE`，否则 Nix 无法读取这个未提交的文件。
-
-- 用方向键往下移动，找到这一行：
-  ```
-  initialHashedPassword = null;
-  ```
-- 把 `null` 替换成你刚才复制的那个 `$y$...` 乱码（**用引号包起来**）
-  ```
-  initialHashedPassword = "$y$j9T...你复制的乱码...";
-  ```
-- 按 `Ctrl+O` → 回车（保存），再按 `Ctrl+X`（退出）
+真实密码哈希和 EasyTier 密钥不会作为 Nix 配置值求值，因此不会进入公开仓库，也不会复制进所有本机用户可读的 Nix store。
 
 > ⚠️ 如果跳过这步，装好后**无法登录**！
 
@@ -249,7 +234,7 @@ export HAO_SECRETS_FILE="$PWD/vars/secrets.nix"
 #### A-4：自动分区（一条命令搞定）
 
 ```bash
-sudo nix run github:accoutmissing/HAO_OFFLINE_NIX/v1.2.2#disko -- \
+sudo nix run github:accoutmissing/HAO_OFFLINE_NIX/v1.2.3#disko -- \
   --mode disko hosts/HAO_DESKTOP/disko-config.nix
 ```
 
@@ -281,7 +266,10 @@ sudo git add -f hosts/HAO_OFFLINE/hardware-configuration.nix
 #### A-6：安装系统
 
 ```bash
-sudo --preserve-env=HAO_SECRETS_FILE nixos-install --impure --flake .#HAO_DESKTOP
+# 将暂存密钥安装到目标系统；目录权限为 0700，文件权限为 0600
+sudo bash scripts/install-secrets.sh /mnt
+
+sudo nixos-install --flake .#HAO_DESKTOP
 ```
 
 > 把 `HAO_DESKTOP` 换成你实际的机器名（见 A-3）。
@@ -349,13 +337,13 @@ nvme0n1          ← 整块硬盘
 
 ```bash
 nix-shell -p git
-git clone --branch v1.2.2 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch v1.2.3 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
 #### B-4：设置登录密码
 
-和方案 A 的 A-2 步骤完全一样：用 `mkpasswd -m yescrypt` 生成密码，写入 `vars/secrets.nix` 的 `initialHashedPassword`。
+和方案 A 的 A-2 步骤完全一样：运行 `scripts/setup.sh`，再用 `mkpasswd -m yescrypt > secrets/feng-password-hash` 生成密码哈希。
 
 #### B-5：手动创建 NixOS 分区
 
@@ -415,7 +403,8 @@ nano hosts/HAO_DESKTOP/hardware-configuration.nix
 #### B-8：安装系统
 
 ```bash
-sudo --preserve-env=HAO_SECRETS_FILE nixos-install --impure --flake .#HAO_DESKTOP
+sudo bash scripts/install-secrets.sh /mnt
+sudo nixos-install --flake .#HAO_DESKTOP
 ```
 
 等 10-30 分钟，安装完成后重启；登录时使用前面配置的 `feng` 用户密码：
@@ -495,11 +484,18 @@ sudo --preserve-env=HAO_SECRETS_FILE nixos-rebuild switch --impure --flake .#HAO
 打开终端（启动器里搜 "kitty" 或 "terminal"），运行：
 
 ```bash
-sudo git clone --branch v1.2.2 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
+# 安装器已经创建了 /etc/nixos，先保留为硬件配置备份
+sudo mv /etc/nixos /etc/nixos.generated
+sudo git clone --branch v1.2.3 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
 cd /etc/nixos
+
+# 笔记本使用 HAO_OFFLINE 时，把本机生成的硬件配置带回仓库工作目录
+sudo cp /etc/nixos.generated/hardware-configuration.nix \
+  /etc/nixos/hosts/HAO_OFFLINE/hardware-configuration.nix
+sudo git add -f hosts/HAO_OFFLINE/hardware-configuration.nix
 ```
 
-以后所有修改都在 `/etc/nixos` 里做。
+台式机 `HAO_DESKTOP` 已有按 label 编写的硬件配置，可以跳过最后两条 `cp` / `git add`。确认系统稳定后再删除 `/etc/nixos.generated` 备份；以后所有修改都在 `/etc/nixos` 里做。
 
 ### 日常使用
 
@@ -520,7 +516,7 @@ cd /etc/nixos
 ```bash
 cd /etc/nixos
 git pull
-sudo --preserve-env=HAO_SECRETS_FILE nixos-rebuild switch --impure --flake .#HAO_DESKTOP
+sudo nixos-rebuild switch --flake .#HAO_DESKTOP
 ```
 
 ### 清理垃圾（释放空间）
@@ -572,7 +568,7 @@ sudo umount -R /mnt
 
 ### ❓ 我想装更多软件
 
-在 `/etc/nixos` 目录下编辑配置文件（`modules/nixos/desktop/packages.nix`），在 `environment.systemPackages` 列表里加上你想要软件的包名，然后运行 `sudo --preserve-env=HAO_SECRETS_FILE nixos-rebuild switch --impure --flake .#你的主机名`。
+在 `/etc/nixos` 目录下编辑配置文件（`modules/nixos/desktop/packages.nix`），在 `environment.systemPackages` 列表里加上你想要软件的包名，然后运行 `sudo nixos-rebuild switch --flake .#你的主机名`。
 
 去 https://search.nixos.org/packages 搜索你想要的软件包名。
 

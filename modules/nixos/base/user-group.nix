@@ -3,23 +3,21 @@
   # 禁止系统外修改用户
   users.mutableUsers = false;
 
-  # 安全检查：防止 initialHashedPassword = null 导致锁死
+  # 安全检查：密码哈希必须从 root-only 文件读取，不能进入 Nix store。
   assertions = [
     {
-      assertion = myvars.initialHashedPassword != null;
+      assertion = myvars.passwordHashFile != "";
       message = ''
-        ⛔ 安全阻止：initialHashedPassword 未设置（null），且 mutableUsers = false。
+        ⛔ 安全阻止：passwordHashFile 未设置，且 mutableUsers = false。
 
-        这会在安装后导致无法登录，且无法用 passwd 修改密码。
-
-        → 请用 mkpasswd -m yescrypt 生成哈希，
-          填入 vars/secrets.nix 的 initialHashedPassword（参考 vars/secrets.example.nix）
+        → 请运行 scripts/setup.sh 生成密码哈希，随后以 root 执行
+          scripts/install-secrets.sh；安装环境使用目标根目录 /mnt。
       '';
     }
   ];
 
   users.users.${myvars.username} = {
-    inherit (myvars) initialHashedPassword;
+    hashedPasswordFile = myvars.passwordHashFile;
     home = "/home/${myvars.username}";
     isNormalUser = true;
     extraGroups = [

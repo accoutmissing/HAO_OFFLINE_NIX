@@ -27,7 +27,7 @@ jobs:
           pr-labels: |
             dependencies
           pr-body: |
-            自动更新 flake.lock（nixpkgs-unstable / home-manager / disko / noctalia / treefmt-nix）。
+            自动更新 flake.lock（nixpkgs-unstable / home-manager / disko / noctalia / treefmt-nix / nixos-wsl）。
 
             - 本 PR 由 update-flake-lock workflow 生成
             - 合并前请确认 CI 检查通过
