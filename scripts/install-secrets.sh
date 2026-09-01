@@ -31,7 +31,9 @@ password_hash="$(tr -d '\r\n' <"$PASSWORD_SOURCE")"
 case "$password_hash" in
 \$y\$*) ;;
 *)
-  echo "错误：密码哈希必须是 mkpasswd -m yescrypt 生成的单行 \$y\$... 值。" >&2
+  # $y$ 是 yescrypt 哈希的字面前缀，不是变量。
+  # shellcheck disable=SC2016
+  echo '错误：密码哈希必须是 mkpasswd -m yescrypt 生成的单行 $y$... 值。' >&2
   exit 1
   ;;
 esac
