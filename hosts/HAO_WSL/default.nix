@@ -9,7 +9,7 @@
 # 直接用本 flake 构建：
 #   sudo nixos-rebuild switch --flake github:accoutmissing/HAO_OFFLINE_NIX#HAO_WSL
 
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # ── WSL 核心（nixos-wsl 模块） ────────────────────────────────

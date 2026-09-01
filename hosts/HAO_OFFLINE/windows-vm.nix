@@ -7,7 +7,7 @@
 # 导致已有 VM 起不来（UEFI firmware not found）。
 # 这里用 tmpfiles 把固件固定链到 /var/lib/ovmf，VM 配置里统一指向该路径。
 
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   # ── libvirtd/QEMU：Win11 需要 TPM(swtpm) + UEFI(OVMF) ───────────────

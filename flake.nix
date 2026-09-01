@@ -40,7 +40,7 @@
 
   # ── 输出 ────────────────────────────────────────────────────────────
   outputs =
-    { self, nixpkgs, home-manager, disko, treefmt-nix, noctalia, nixos-wsl, ... }@inputs:
+    { self, nixpkgs, home-manager, disko, treefmt-nix, nixos-wsl, ... }@inputs:
     let
       inherit (nixpkgs) lib;
       system = "x86_64-linux";

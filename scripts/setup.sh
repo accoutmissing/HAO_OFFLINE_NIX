@@ -12,7 +12,7 @@ EASYTIER_FILE="$SECRETS_DIR/easytier.env"
 install -d -m 700 "$SECRETS_DIR"
 
 if [ ! -e "$PASSWORD_FILE" ]; then
-  : > "$PASSWORD_FILE"
+  : >"$PASSWORD_FILE"
   chmod 600 "$PASSWORD_FILE"
   echo "✓ 已创建空密码哈希文件 $PASSWORD_FILE"
 fi
