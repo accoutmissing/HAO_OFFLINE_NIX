@@ -22,6 +22,7 @@
 
   # ── 模块开关（与笔记本共用 desktop/base 模块） ────────────────────
   modules.desktop.hermes-access.enable = true;
+  modules.desktop.ai-agent.enable = true;
   modules.desktop.noctalia.enable = true;
   modules.desktop.gaming.enable = true;
 }

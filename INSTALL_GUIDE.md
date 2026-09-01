@@ -507,7 +507,18 @@ sudo git add -f hosts/HAO_OFFLINE/hardware-configuration.nix
 | 锁屏 | 按 `Win + L` |
 | 连 WiFi | 右上角状态栏点网络图标 |
 | 截图 | 按 `Print Screen` 键 |
+| 呼出 AI Agent | 按 `Win + Shift + Ctrl + A`，再次按下可隐藏且不丢失会话 |
 | 关机 | 终端输入 `sudo reboot`，或右上角菜单里有关机选项 |
+
+第一次使用 AI Agent 时，打开终端并登录你要使用的服务：
+
+```bash
+codex login
+claude # 首次启动时按提示登录
+opencode auth login
+```
+
+系统默认打开 Codex。运行 `ai-pick` 可以临时选择其他 Agent；运行 `hao-agent --set claude` 可以把 Claude Code 设为默认。登录凭据只保存在当前用户目录，不会进入公开仓库。
 
 ### 更新系统
 

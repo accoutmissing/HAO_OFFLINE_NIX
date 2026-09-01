@@ -46,6 +46,20 @@ in
             }
         }
 
+        ${lib.optionalString config.modules.desktop.ai-agent.enable ''
+          workspace "AI" {}
+
+          // 类似 Omarchy 的下拉 Agent：独立工作区、顶部浮动、保留会话
+          window-rule {
+              match app-id=r#"^hao-ai$"#
+              open-on-workspace "AI"
+              open-floating true
+              default-floating-position x=0 y=0 relative-to="top"
+              default-window-height { proportion 0.5; }
+              default-column-width { proportion 0.8; }
+          }
+        ''}
+
         binds {
             // ── 基础 ──
             Mod+Shift+Slash { show-hotkey-overlay; }
@@ -57,6 +71,9 @@ in
             // ── Noctalia ──
             Mod+Space { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
             Mod+Alt+L { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
+            ${lib.optionalString config.modules.desktop.ai-agent.enable ''
+              Mod+Shift+Ctrl+A hotkey-overlay-title="AI Agent" { spawn "hao-agent-toggle"; }
+            ''}
 
             // ── 焦点移动 ──
             Mod+Left  { focus-column-left; }

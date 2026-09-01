@@ -72,6 +72,7 @@ in
 
   # ── 模块开关 ─────────────────────────────────────────────────────────
   modules.desktop.hermes-access.enable = true;
+  modules.desktop.ai-agent.enable = true;
   modules.desktop.noctalia.enable = true;
   modules.desktop.gaming.enable = true;
 }

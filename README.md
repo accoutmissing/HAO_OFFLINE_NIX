@@ -11,6 +11,7 @@
 | 🔤 中文输入 | Fcitx5 + Rime |
 | 🎨 设计 | GIMP / Inkscape / Krita / Blender 全套 |
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
+| 🤖 原生 AI | Codex / Claude Code / OpenCode，快捷呼出并保留终端会话 |
 | 🎮 游戏 | Steam + Lutris + GameMode + MangoHud + Gamescope |
 | 💬 通讯 | QQ / 微信（Linux 原生） |
 | 🖥️ Windows 应用 | KVM/QEMU Windows VM（virt-manager / quickemu，swtpm + OVMF） |
@@ -58,6 +59,25 @@ sudo nixos-rebuild switch --rollback
 # 清理旧版本
 sudo nix-collect-garbage --delete-older-than 7d
 ```
+
+## 🤖 原生 AI Agent
+
+桌面配置内置了类似 Omarchy 的原生 AI 入口，但适配为 Niri + Noctalia：
+
+- 按 `Win + Shift + Ctrl + A` 呼出或隐藏顶部浮动的 Agent 窗口；再次打开会保留之前的会话。
+- 按 `Win + 空格` 搜索 **HAO AI** 也可以启动。
+- 默认使用 Codex；运行 `ai-pick` 可临时选择 Codex、Claude Code 或 OpenCode。
+- 运行 `hao-agent --set claude` 可修改默认 Agent，支持值为 `codex`、`claude`、`opencode`。
+
+第一次使用某个 Agent 时，在终端完成它自己的登录：
+
+```bash
+codex login
+claude # 首次启动时按提示登录
+opencode auth login
+```
+
+登录凭据由各 CLI 保存在当前用户目录中，不会写入 Git 仓库或 Nix Store。Agent 仍保留正常的命令确认流程，不会默认获得免确认执行权限。
 
 ## 📚 相关链接
 
