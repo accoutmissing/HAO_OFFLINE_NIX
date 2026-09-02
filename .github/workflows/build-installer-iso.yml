@@ -1,0 +1,40 @@
+name: build-installer-iso
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  iso:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+
+      - name: Build HAO Installer ISO
+        run: nix build --accept-flake-config --no-write-lock-file .#hao-installer-iso
+
+      - name: Prepare release files
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp result/iso/*.iso dist/
+          cd dist
+          sha256sum ./*.iso > SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hao-installer-iso
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Attach ISO to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber

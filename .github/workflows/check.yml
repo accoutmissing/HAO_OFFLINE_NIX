@@ -26,3 +26,4 @@ jobs:
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_DESKTOP.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_OFFLINE.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_WSL.config.system.build.toplevel.drvPath
+      - run: nix eval --no-write-lock-file .#packages.x86_64-linux.hao-installer-iso.drvPath

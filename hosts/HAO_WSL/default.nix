@@ -15,7 +15,7 @@
   # ── WSL 核心（nixos-wsl 模块） ────────────────────────────────
   wsl = {
     enable = true;
-    defaultUser = "feng";
+    defaultUser = "admin";
     startMenuLaunchers = true;
 
     # 允许在 WSL 里直接调用 Windows 程序（explorer.exe 等）
@@ -29,7 +29,8 @@
   i18n.defaultLocale = "zh_CN.UTF-8";
 
   # ── 用户（与 vars 保持一致） ────────────────────────────────
-  users.users.feng = {
+  users.users.admin = {
+    description = "Admin";
     isNormalUser = true;
     extraGroups = [ "wheel" ];
     shell = pkgs.zsh;
@@ -57,7 +58,7 @@
     "nix-community.cachix.org-1:4BzitgziQkMCO+4QhMhVA8Wp9T5IhzsaCqPCU3c1gQ8="
   ];
 
-  # 这是 Agent 调试环境；feng 没有声明登录密码，因此保留 passwordless sudo，
+  # 这是 Agent 调试环境；admin 没有声明登录密码，因此保留 passwordless sudo，
   # 避免首次切换配置后无法继续管理系统。
   security.sudo.wheelNeedsPassword = false;
   system.stateVersion = "25.05";

@@ -17,6 +17,7 @@
   ];
 
   users.users.${myvars.username} = {
+    description = myvars.userfullname;
     hashedPasswordFile = myvars.passwordHashFile;
     home = "/home/${myvars.username}";
     isNormalUser = true;
@@ -37,7 +38,7 @@
 
   users.users.root = {
     # root 完全锁定：无密码、无 SSH 密钥，任何登录途径都不放行；
-    # 维护统一走 feng + sudo（wheel 组）
+    # 维护统一走 admin + sudo（wheel 组）
     hashedPassword = "!";
   };
 }

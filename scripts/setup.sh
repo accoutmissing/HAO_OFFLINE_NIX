@@ -6,7 +6,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SECRETS_DIR="$REPO_ROOT/secrets"
 EXAMPLE_DIR="$REPO_ROOT/secrets.example"
-PASSWORD_FILE="$SECRETS_DIR/feng-password-hash"
+PASSWORD_FILE="$SECRETS_DIR/admin-password-hash"
 EASYTIER_FILE="$SECRETS_DIR/easytier.env"
 
 install -d -m 700 "$SECRETS_DIR"

@@ -15,6 +15,34 @@
 
 ---
 
+## 推荐：直接使用 HAO 全屏安装向导
+
+如果 [Releases](https://github.com/accoutmissing/HAO_OFFLINE_NIX/releases) 中带有
+`hao-installer-*.iso`，优先下载这个镜像。它启动后会自动进入安装界面，依次询问：
+
+1. 网络连接。
+2. 台式机 `HAO_DESKTOP` 或笔记本 `HAO_OFFLINE`。
+3. 要清空并安装的磁盘。
+4. `admin` 用户（界面显示为 `Admin`）的登录密码。
+5. 最终安装确认。
+
+密码明文不会写入磁盘；安装器只把 yescrypt 哈希保存到目标系统的 root-only
+目录。安装完成后会显示重启按钮，第一次进入桌面还会通过 Noctalia 显示快捷键和
+HAO AI 使用提示。
+
+> 🔴 当前向导只支持 **UEFI 整盘安装**。它会清空所选磁盘上的 Windows、分区和
+> 所有文件。需要双系统时不要使用自动安装，继续阅读本指南的手动双系统方案。
+
+开发者可以从仓库源码构建镜像：
+
+```bash
+nix build --accept-flake-config .#hao-installer-iso
+```
+
+生成的镜像位于 `result/iso/`。下面的内容是标准 NixOS 安装盘与手动安装兜底流程。
+
+---
+
 ## 二、安装前你要准备什么
 
 ### 硬件清单
@@ -27,9 +55,10 @@
 
 ### 下载两个东西
 
-**1. NixOS 系统镜像（ISO 文件）**
+**1. 系统镜像（ISO 文件）**
 
-这是 NixOS 的"安装盘"，大约 2-3GB。
+优先使用 Release 中的 `hao-installer-*.iso`。如果 Release 暂时没有 HAO 镜像，
+再下载 NixOS 官方 graphical 安装盘并使用后面的手动流程：
 
 - 打开浏览器，访问：**https://mirrors.tuna.tsinghua.edu.cn/nixos-images/**
 - 往下翻，找到最新日期那个文件夹，点进去
@@ -187,7 +216,7 @@ sda        14.8G disk     ← 这是你的 U 盘
 
 ```bash
 nix-shell -p git
-git clone --branch v1.2.3 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch v1.2.5 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
@@ -201,12 +230,12 @@ cd HAO_OFFLINE_NIX
 bash scripts/setup.sh
 ```
 
-脚本会创建 `secrets/feng-password-hash` 和 `secrets/easytier.env`。这些文件只用于暂存，整个 `secrets/` 目录都不会上传到 GitHub。
+脚本会创建 `secrets/admin-password-hash` 和 `secrets/easytier.env`。这些文件只用于暂存，整个 `secrets/` 目录都不会上传到 GitHub。
 
 然后生成密码哈希：
 
 ```bash
-mkpasswd -m yescrypt > secrets/feng-password-hash
+mkpasswd -m yescrypt > secrets/admin-password-hash
 ```
 
 - 输入你想要的密码（**输入时屏幕不会显示任何东西，这是正常的**）
@@ -234,7 +263,7 @@ nano secrets/easytier.env
 #### A-4：自动分区（一条命令搞定）
 
 ```bash
-sudo nix run github:accoutmissing/HAO_OFFLINE_NIX/v1.2.3#disko -- \
+sudo nix run github:accoutmissing/HAO_OFFLINE_NIX/v1.2.5#disko -- \
   --mode disko hosts/HAO_DESKTOP/disko-config.nix
 ```
 
@@ -279,7 +308,7 @@ sudo nixos-install --flake .#HAO_DESKTOP
 - 看到满屏文字在跑 → 正常，等着
 - 停在同一行很久 → 也在下载，别急
 - 屏幕偶尔出现方块乱码 → 不影响，继续等
-- 安装完成后请使用前面写入 secrets 文件的 `feng` 用户密码登录；root 已按配置锁定，不应依赖 root 密码登录
+- 安装完成后请使用前面写入 secrets 文件的 `admin` 用户密码登录；root 已按配置锁定，不应依赖 root 密码登录
 
 看到 `安装完成` 或类似的提示后，输入：
 
@@ -337,13 +366,13 @@ nvme0n1          ← 整块硬盘
 
 ```bash
 nix-shell -p git
-git clone --branch v1.2.3 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch v1.2.5 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
 #### B-4：设置登录密码
 
-和方案 A 的 A-2 步骤完全一样：运行 `scripts/setup.sh`，再用 `mkpasswd -m yescrypt > secrets/feng-password-hash` 生成密码哈希。
+和方案 A 的 A-2 步骤完全一样：运行 `scripts/setup.sh`，再用 `mkpasswd -m yescrypt > secrets/admin-password-hash` 生成密码哈希。
 
 #### B-5：手动创建 NixOS 分区
 
@@ -407,7 +436,7 @@ sudo bash scripts/install-secrets.sh /mnt
 sudo nixos-install --flake .#HAO_DESKTOP
 ```
 
-等 10-30 分钟，安装完成后重启；登录时使用前面配置的 `feng` 用户密码：
+等 10-30 分钟，安装完成后重启；登录时使用前面配置的 `admin` 用户密码：
 
 ```bash
 sudo reboot
@@ -486,7 +515,7 @@ sudo --preserve-env=HAO_SECRETS_FILE nixos-rebuild switch --impure --flake .#HAO
 ```bash
 # 安装器已经创建了 /etc/nixos，先保留为硬件配置备份
 sudo mv /etc/nixos /etc/nixos.generated
-sudo git clone --branch v1.2.3 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
+sudo git clone --branch v1.2.5 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
 cd /etc/nixos
 
 # 笔记本使用 HAO_OFFLINE 时，把本机生成的硬件配置带回仓库工作目录

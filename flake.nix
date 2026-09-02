@@ -1,5 +1,5 @@
 {
-  description = "Feng's NixOS configuration";
+  description = "Admin's HAO NixOS configuration";
 
   # ── 输入源 ──────────────────────────────────────────────────────────
   inputs = {
@@ -88,12 +88,24 @@
 
       # treefmt 配置
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+
+      # HAO 品牌安装介质（全屏 TUI + Disko + Flake 安装）
+      haoInstaller = lib.nixosSystem {
+        inherit system;
+        specialArgs = inputs // {
+          inherit inputs self system;
+        };
+        modules = [ ./installer/iso.nix ];
+      };
     in
     {
       # ── 系统配置 ──────────────────────────────────────────────────────
       nixosConfigurations = {
         HAO_OFFLINE = mkSystem "HAO_OFFLINE" [ ];
         HAO_DESKTOP = mkSystem "HAO_DESKTOP" [ ];
+
+        # 可启动安装 ISO；与桌面主机分离，不继承 base/desktop 模块。
+        HAO_INSTALLER = haoInstaller;
 
         # Windows WSL 测试环境（无引导/无桌面，精简配置）
         HAO_WSL = lib.nixosSystem {
@@ -110,7 +122,10 @@
       };
 
       # ── 安装工具 ──────────────────────────────────────────────────────
-      packages.${system}.disko = disko.packages.${system}.disko;
+      packages.${system} = {
+        disko = disko.packages.${system}.disko;
+        hao-installer-iso = haoInstaller.config.system.build.isoImage;
+      };
 
       # ── 格式化 ────────────────────────────────────────────────────────
       formatter.${system} = treefmtEval.config.build.wrapper;

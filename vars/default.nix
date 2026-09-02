@@ -20,16 +20,16 @@ let
 
 in
 {
-  username = "feng";
-  userfullname = "Feng";
-  useremail = "feng@example.com";
+  username = "admin";
+  userfullname = "Admin";
+  useremail = "admin@example.com";
 
   # 主机名占位值（各 hosts/<hostname>/default.nix 中覆盖）
   hostname = null;
 
   # 敏感内容只在系统激活/服务启动时读取，不能作为 Nix 值进入 world-readable store。
   # 安装前运行 scripts/setup.sh，再以 root 执行 scripts/install-secrets.sh。
-  passwordHashFile = "/var/lib/hao-secrets/feng-password-hash";
+  passwordHashFile = "/var/lib/hao-secrets/admin-password-hash";
   easytierEnvironmentFile = "/var/lib/hao-secrets/easytier.env";
 
   # SSH 公钥（用于远程部署和管理）

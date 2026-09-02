@@ -13,7 +13,7 @@ case "$TARGET_ROOT" in
   ;;
 esac
 
-PASSWORD_SOURCE="$SOURCE_DIR/feng-password-hash"
+PASSWORD_SOURCE="$SOURCE_DIR/admin-password-hash"
 EASYTIER_SOURCE="$SOURCE_DIR/easytier.env"
 TARGET_DIR="${TARGET_ROOT%/}/var/lib/hao-secrets"
 
@@ -39,8 +39,8 @@ case "$password_hash" in
 esac
 
 install -d -m 0700 -o root -g root "$TARGET_DIR"
-install -m 0600 -o root -g root "$PASSWORD_SOURCE" "$TARGET_DIR/feng-password-hash"
-echo "✓ 已安装密码哈希到 $TARGET_DIR/feng-password-hash"
+install -m 0600 -o root -g root "$PASSWORD_SOURCE" "$TARGET_DIR/admin-password-hash"
+echo "✓ 已安装密码哈希到 $TARGET_DIR/admin-password-hash"
 
 if [ -s "$EASYTIER_SOURCE" ] &&
   grep -q '^ET_NETWORK_SECRET=' "$EASYTIER_SOURCE" &&

@@ -8,6 +8,7 @@
 |------|------|
 | 🖥️ 主机 | HAO_OFFLINE（笔记本 i7-8750H + GTX 1060）/ HAO_DESKTOP（台式机 i5-13600KF + RTX 4070S）/ HAO_SERVER（服务器，独立分支） |
 | 🪟 桌面 | Niri（滚动平铺 Wayland）+ Noctalia 壳层（bar/dock/启动器/锁屏）+ ReGreet 图形登录 |
+| 💿 安装 | HAO 全屏安装向导 + Disko 自动分区 + 首次登录欢迎提示 |
 | 🔤 中文输入 | Fcitx5 + Rime |
 | 🎨 设计 | GIMP / Inkscape / Krita / Blender 全套 |
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
@@ -20,7 +21,7 @@
 | 🔒 安全 | SSH 禁密码 + root 锁定 + root-only 运行时 secrets（不进 Git / Nix store） |
 | 🔄 系统 | Btrfs + zstd 压缩 + zram + 每周自动 GC |
 | 🇨🇳 国内优化 | 清华/中科大镜像 + 超时优化 |
-| 🔧 CI | GitHub Actions `nix flake check` + 三主机 eval |
+| 🔧 CI | GitHub Actions `nix flake check` + 四主机/ISO eval + Release ISO 构建 |
 
 ## 🖥️ 主机一览
 
@@ -34,8 +35,24 @@
 ## 🚀 快速开始
 
 - 🐣 **第一次接触 Linux？** → [📖 安装入门指南（写给纯小白）](./INSTALL_GUIDE.md)
+- 💿 **想直接制作 HAO 安装盘？** → [HAO Installer 构建与安全说明](./installer/README.md)
 - ⚙️ **想按已有教程装系统？** → 参考 [README 旧版安装说明](https://github.com/accoutmissing/HAO_OFFLINE_NIX/blob/main/README.md)（已迁移至 INSTALL_GUIDE）
 - 📦 **想用发布版本？** → [Releases](https://github.com/accoutmissing/HAO_OFFLINE_NIX/releases)
+
+### HAO 图形化安装向导
+
+Release 中的 `hao-installer-*.iso` 启动后会自动进入全屏安装界面，无需先打开
+终端。依次完成网络、机型、磁盘和登录密码设置后，安装器会自动执行 Disko 与
+`nixos-install`，并在结束时显示重启页面。
+
+当前版本只支持 **UEFI 整盘安装**，所选磁盘会被完全清空；双系统继续使用
+[安装指南](./INSTALL_GUIDE.md) 中的高级手动流程。需要从源码构建 ISO 时运行：
+
+```bash
+nix build --accept-flake-config .#hao-installer-iso
+```
+
+生成文件位于 `result/iso/`。
 
 ## 🛠️ 常用操作
 
@@ -50,7 +67,7 @@ nix flake check --no-write-lock-file
 nix flake lock
 git add flake.lock && git commit -m "chore: update flake.lock"
 
-# 更新系统（先确认 /var/lib/hao-secrets/feng-password-hash 已安装）
+# 更新系统（先确认 /var/lib/hao-secrets/admin-password-hash 已安装）
 sudo nixos-rebuild switch --flake .#HAO_DESKTOP
 
 # 回滚到上一个版本

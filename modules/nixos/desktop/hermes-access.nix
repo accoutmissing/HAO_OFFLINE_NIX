@@ -10,7 +10,7 @@ in
 
   config = mkIf cfg.enable {
     # ── 云端 SSH 公钥（独立于主人 main key，可单独吊销） ─────────────
-    # 注意：下面 sudo 规则绑定到「用户 feng」而非具体密钥，任何能登录 feng
+    # 注意：下面 sudo 规则绑定到「用户 admin」而非具体密钥，任何能登录 admin
     # 的密钥都享有同样 NOPASSWD 权限；独立 key 的意义在身份区分与吊销，
     # 并非权限隔离。
     users.users.${myvars.username}.openssh.authorizedKeys.keys =
