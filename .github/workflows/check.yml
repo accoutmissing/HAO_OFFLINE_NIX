@@ -1,5 +1,8 @@
 name: check
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -10,9 +13,9 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -20,9 +23,7 @@ jobs:
       - run: nix flake check --no-write-lock-file
 
       # 验证三台主机的系统闭包能完整求值（只 eval 不构建，比 nix build 轻）
-      # 注意：HAO_OFFLINE 的 hardware-configuration.nix 在仓库中
-      # 不存在（安装时生成），CI 验证的是“无硬件配置”形态，
-      # 不等于真机可装；真机安装前务必 git add -f 硬件配置
+      # 两台主机的硬件配置均在仓库中，安装和远程重建使用相同来源。
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_DESKTOP.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_OFFLINE.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_WSL.config.system.build.toplevel.drvPath

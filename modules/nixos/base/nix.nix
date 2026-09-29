@@ -16,6 +16,7 @@
       auto-optimise-store = false;
 
       experimental-features = [ "nix-command" "flakes" ];
+      # admin 是有意授权的系统调试 Agent 账户；Nix trusted-users 等同 root 权限。
       trusted-users = [ "root" "@wheel" ];
 
       # 国内网络优化：超时缩短，避免因国际连接卡死

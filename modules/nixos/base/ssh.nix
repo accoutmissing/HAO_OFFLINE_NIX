@@ -5,7 +5,7 @@ _:
     enable = true;
     settings = {
       PasswordAuthentication = false;
-      PermitRootLogin = "prohibit-password";
+      PermitRootLogin = "no";
     };
   };
 }

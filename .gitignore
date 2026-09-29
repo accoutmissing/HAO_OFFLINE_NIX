@@ -16,7 +16,5 @@ secrets/
 *.age
 vars/secrets.nix
 
-# 硬件配置（安装时生成，不跟踪；⚠️ 安装机器上必须 `git add -f`，
-# 否则 git 仓库型 flake 看不到该文件，nixos-install 会报根文件系统未定义）
-hosts/HAO_OFFLINE/hardware-configuration.nix
+# HAO_OFFLINE 的硬件配置已去敏并纳入版本控制，保证远程 Flake 重建可用。
 hosts/HAO_HYPERV/hardware-configuration.nix

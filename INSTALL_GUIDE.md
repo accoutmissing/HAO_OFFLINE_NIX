@@ -26,6 +26,21 @@
 4. `admin` 用户（界面显示为 `Admin`）的登录密码。
 5. 最终安装确认。
 
+确认后，向导先完整构建所选主机系统，再清空磁盘。若网络、内存或安装环境的可用空间不足，构建会失败并保留原磁盘数据。
+无法确认安装 U 盘所在物理磁盘时，向导也会停止。
+
+### 在安装镜像中准备联网下载
+
+HAO 安装镜像已预置 LocalSend 和 Mihomo（Clash 核心），无需在现场下载代理软件。
+它是文字安装界面，菜单中的 LocalSend 会临时打开图形接收窗口；关闭窗口即可回到安装向导。
+
+1. 先用网线或向导里的 `Configure Wi-Fi` 接入网络。使用 LocalSend 时，两台设备须在同一局域网；手机热点也可以，但要允许设备互相访问。
+2. 需要代理时，提前在另一台设备准备 **Mihomo 兼容、包含离线可用节点的 `config.yaml`**（含 HTTP/mixed 代理端口；只有订阅网址、需要首次在线拉取节点的配置不适合引导联网）。建议使用 `geodata-mode: true`；镜像已预置常用 GeoIP/GeoSite 规则数据，但不会预置你自己的订阅及节点。在菜单选择 `Receive config with LocalSend`，从另一台设备发送文件，记下接收文件在界面中显示的路径；也可从 U 盘导入。
+3. 回到菜单选 `Import and start Clash config`，输入文件的绝对路径，以及配置中的 HTTP/mixed 端口（默认填写 `7890`）。向导会检查配置并试连 Nix 缓存；成功后同时为安装器与 Nix 下载服务设置临时代理。
+4. 用 `Check GitHub and Nix cache` 确认两个下载源都可用，再继续安装。NetworkManager 显示已联网，不代表这些下载源一定可达。
+
+代理配置的导入副本位于安装介质运行时的 `/run/hao-installer/mihomo`，不会写入 Git、Nix store 或目标系统。不要把含订阅密钥的文件提交到公开仓库。LocalSend 不需要互联网，但局域网须允许设备互访；若发现不了对方，改用 U 盘。ISO 仅预装软件，不附带个人订阅、节点或账号。安装完重启后，这个临时代理不会自动延续到新系统。
+
 密码明文不会写入磁盘；安装器只把 yescrypt 哈希保存到目标系统的 root-only
 目录。安装完成后会显示重启按钮，第一次进入桌面还会通过 Noctalia 显示快捷键和
 HAO AI 使用提示。
@@ -216,7 +231,7 @@ sda        14.8G disk     ← 这是你的 U 盘
 
 ```bash
 nix-shell -p git
-git clone --branch v1.2.5 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch main https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
@@ -279,18 +294,12 @@ nano hosts/HAO_DESKTOP/disko-config.nix
 
 分区成功后，硬盘已经被挂载到 `/mnt`。
 
-#### A-5：生成硬件配置（笔记本必做，台式机可跳过）
+#### A-5：核对硬件配置
 
-如果你选择 `HAO_OFFLINE`（笔记本），安装前先生成并加入 flake：
-
-```bash
-sudo nixos-generate-config --root /mnt
-sudo cp /mnt/etc/nixos/hardware-configuration.nix hosts/HAO_OFFLINE/
-# git 仓库型 flake 看不到被 .gitignore 排除的文件，必须强制加入索引
-sudo git add -f hosts/HAO_OFFLINE/hardware-configuration.nix
-```
-
-台式机 `HAO_DESKTOP` 已带按磁盘 label 编写的硬件配置，可以直接进入下一步。
+`HAO_OFFLINE` 和 `HAO_DESKTOP` 都已带按磁盘 label 编写、由 Git 跟踪的硬件配置。
+如果实际磁盘控制器不是普通 NVMe/AHCI，先运行 `sudo nixos-generate-config --root /mnt`
+对照生成文件中的 `boot.initrd.availableKernelModules`，把缺少的模块补进对应
+`hosts/<机器名>/hardware-configuration.nix`。不要直接覆盖已跟踪的文件系统布局。
 
 #### A-6：安装系统
 
@@ -366,7 +375,7 @@ nvme0n1          ← 整块硬盘
 
 ```bash
 nix-shell -p git
-git clone --branch v1.2.5 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
+git clone --branch main https://github.com/accoutmissing/HAO_OFFLINE_NIX.git
 cd HAO_OFFLINE_NIX
 ```
 
@@ -513,18 +522,14 @@ sudo --preserve-env=HAO_SECRETS_FILE nixos-rebuild switch --impure --flake .#HAO
 打开终端（启动器里搜 "kitty" 或 "terminal"），运行：
 
 ```bash
-# 安装器已经创建了 /etc/nixos，先保留为硬件配置备份
-sudo mv /etc/nixos /etc/nixos.generated
-sudo git clone --branch v1.2.5 https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
+# 安装器已复制发布版本的配置；先保留备份，再拉取后续更新
+sudo mv /etc/nixos /etc/nixos.installer-backup
+sudo git clone --branch main https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
 cd /etc/nixos
-
-# 笔记本使用 HAO_OFFLINE 时，把本机生成的硬件配置带回仓库工作目录
-sudo cp /etc/nixos.generated/hardware-configuration.nix \
-  /etc/nixos/hosts/HAO_OFFLINE/hardware-configuration.nix
-sudo git add -f hosts/HAO_OFFLINE/hardware-configuration.nix
 ```
 
-台式机 `HAO_DESKTOP` 已有按 label 编写的硬件配置，可以跳过最后两条 `cp` / `git add`。确认系统稳定后再删除 `/etc/nixos.generated` 备份；以后所有修改都在 `/etc/nixos` 里做。
+两个主机的硬件配置都已包含在仓库中。确认新配置可正常重建后，再处理
+`/etc/nixos.installer-backup` 备份；以后所有修改都在 `/etc/nixos` 里做。
 
 ### 日常使用
 

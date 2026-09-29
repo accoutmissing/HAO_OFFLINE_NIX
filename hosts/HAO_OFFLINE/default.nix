@@ -1,39 +1,9 @@
 { lib, myvars, pkgs, ... }:
-let
-  inherit (myvars) hostname;
-
-  # 硬件配置由 nixos-generate-config 在安装时生成
-  # 不是每台机器都有，所以用 pathExists 按需导入
-  hasHardwareConfig = builtins.pathExists ./hardware-configuration.nix;
-in
 {
-  imports = lib.optionals hasHardwareConfig [ ./hardware-configuration.nix ]
-    ++ [ ./optimus.nix ./windows-vm.nix ];
+  imports = [ ./hardware-configuration.nix ./optimus.nix ./windows-vm.nix ];
 
   # ── 主机身份 ────────────────────────────────────────────────────────
-  networking.hostName = hostname;
-
-  # ── 兜底文件系统（仅在 hardware-configuration.nix 缺失时生效） ────
-  # 与 disko-config.nix / README 手动分区布局一致（by-label）：
-  # 1. 让 CI 的 nix flake check / eval 能完整求值（否则报根文件系统未定义）
-  # 2. 真机上仍推荐生成硬件配置并 git add -f（含 initrd 驱动等信息）
-  fileSystems = lib.mkIf (!hasHardwareConfig) {
-    "/" = {
-      device = "/dev/disk/by-label/NIXOS";
-      fsType = "btrfs";
-      options = [ "subvol=@" "compress=zstd" "noatime" ];
-    };
-    "/home" = {
-      device = "/dev/disk/by-label/NIXOS";
-      fsType = "btrfs";
-      options = [ "subvol=@home" "compress=zstd" "noatime" ];
-    };
-    "/boot" = {
-      device = "/dev/disk/by-label/BOOT";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
-  };
+  networking.hostName = myvars.hostname;
 
   # ── Intel CPU（Coffee Lake i7-8750H） ──────────────────────────────
   boot.kernelModules = [ "kvm_intel" ];

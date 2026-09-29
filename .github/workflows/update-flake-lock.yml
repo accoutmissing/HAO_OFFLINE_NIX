@@ -1,7 +1,9 @@
 # 每周自动更新 flake.lock 并创建 PR
 # 仓库首次缺少 flake.lock 时，本 workflow 第一次运行就会补上；
 # 之后每周跟随 nixpkgs-unstable / home-manager 上游刷新一次。
-# 合并 PR 前 CI（check.yml）会先跑通，上游破坏性变更可提前发现。
+# 合并 PR 前必须确认 check.yml 通过；GITHUB_TOKEN 创建的 PR 可能需要手动批准 CI。
+# 仓库 Settings > Actions > General > Workflow permissions 中必须开启
+# "Allow GitHub Actions to create and approve pull requests"，否则 PR 创建会失败。
 name: update-flake-lock
 
 on:
@@ -17,11 +19,11 @@ jobs:
   lockfile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
 
-      - uses: DeterminateSystems/update-flake-lock@v24
+      - uses: DeterminateSystems/update-flake-lock@a2bbe0274e3a0c4194390a1e445f734c597ebc37 # v24
         with:
           pr-title: "chore: update flake.lock"
           pr-labels: |
@@ -30,5 +32,5 @@ jobs:
             自动更新 flake.lock（nixpkgs-unstable / home-manager / disko / noctalia / treefmt-nix / nixos-wsl）。
 
             - 本 PR 由 update-flake-lock workflow 生成
-            - 合并前请确认 CI 检查通过
+            - 如 GitHub 要求先批准此 PR 的 workflow，请批准后确认 CI 检查通过
             - 如需本地生成：`nix flake lock`

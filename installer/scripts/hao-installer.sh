@@ -34,6 +34,10 @@ TARGET_DISK=""
 TARGET_DISK_LABEL=""
 PASSWORD_HASH=""
 BOOT_DISK=""
+TARGET_DISK_ID=""
+TARGET_DISK_SIZE=""
+TARGET_DISK_SERIAL=""
+TARGET_DISK_WWN=""
 
 tips=(
   "The installer log is saved to /var/log/hao-install.log"
@@ -228,7 +232,7 @@ run_phase() {
 }
 
 resolve_parent_disk() {
-  local node="$1" type parent
+  local node="$1" type parent backing source
   node="$(readlink -f "$node" 2>/dev/null || printf '%s' "$node")"
 
   while [[ -b $node ]]; do
@@ -236,6 +240,14 @@ resolve_parent_disk() {
     if [[ $type == "disk" ]]; then
       printf '%s\n' "$node"
       return 0
+    fi
+    if [[ $type == "loop" ]]; then
+      backing="$(losetup --noheadings --output BACK-FILE "$node" 2>/dev/null | head -n 1)"
+      [[ -f $backing ]] || return 1
+      source="$(findmnt -rn -o MAJ:MIN --target "$backing" 2>/dev/null || true)"
+      [[ -e /sys/dev/block/$source ]] || return 1
+      node="/dev/$(basename "$(readlink -f "/sys/dev/block/$source")")"
+      continue
     fi
     parent="$(lsblk -dnro PKNAME "$node" 2>/dev/null || true)"
     [[ -n $parent ]] || break
@@ -246,10 +258,25 @@ resolve_parent_disk() {
 }
 
 detect_boot_disk() {
-  local iso_device
-  iso_device="$(findfs LABEL=HAO_INSTALLER 2>/dev/null || true)"
-  [[ -n $iso_device ]] || return 0
-  resolve_parent_disk "$iso_device" || true
+  local iso_device parent boot_disk="" found=0
+  while IFS= read -r iso_device; do
+    [[ -n $iso_device ]] || continue
+    found=1
+    parent="$(resolve_parent_disk "$iso_device")" || return 1
+    if [[ -n $boot_disk && $parent != "$boot_disk" ]]; then
+      return 1
+    fi
+    boot_disk="$parent"
+  done < <(blkid -t LABEL=HAO_INSTALLER -o device 2>/dev/null)
+  ((found == 1)) || return 1
+  printf '%s\n' "$boot_disk"
+}
+
+disk_identity() {
+  local device="$1" id
+  id="$(lsblk -dnro MAJ:MIN "$device")"
+  [[ -n $id ]] || return 1
+  printf '%s\n' "$id"
 }
 
 preflight() {
@@ -273,7 +300,10 @@ preflight() {
     failure_menu "The bundled HAO configuration is missing"
   fi
 
-  BOOT_DISK="$(detect_boot_disk)"
+  if ! BOOT_DISK="$(detect_boot_disk)"; then
+    echo "Cannot uniquely identify the physical installer disk." >>"$LOG_FILE"
+    failure_menu "Cannot safely identify the installer USB disk"
+  fi
 }
 
 welcome() {
@@ -294,36 +324,146 @@ welcome() {
 
 configure_network() {
   local connectivity choice
-  connectivity="$(nmcli -t -f CONNECTIVITY general 2>/dev/null || true)"
-  [[ $connectivity == "full" ]] && return 0
-
-  while [[ $connectivity != "full" ]]; do
-    screen_header "Connect to the internet" "Packages are downloaded during installation"
+  while true; do
+    connectivity="$(nmcli -t -f CONNECTIVITY general 2>/dev/null || true)"
+    screen_header "Prepare downloads" "Connect to a LAN, then check GitHub and the Nix cache"
+    printf '  LocalSend can receive a Clash config from another device on the same LAN.\n'
+    printf '  The ISO includes LocalSend and the Mihomo (Clash) core; no download is needed.\n\n'
     choice="$(gum choose \
-      --header "Network status: ${connectivity:-unknown}" \
+      --header "NetworkManager: ${connectivity:-unknown} | Proxy: ${HAO_PROXY_PORT:-off}" \
       "Configure Wi-Fi" \
-      "Retry connection check" \
-      "Continue anyway" \
+      "Receive config with LocalSend" \
+      "Import and start Clash config" \
+      "Check GitHub and Nix cache" \
+      "Continue to installation" \
       "Open shell")" || choice="Open shell"
 
     case "$choice" in
     "Configure Wi-Fi") nmtui-connect || true ;;
-    "Retry connection check") ;;
-    "Continue anyway") return 0 ;;
+    "Receive config with LocalSend") receive_with_localsend ;;
+    "Import and start Clash config") import_clash_config ;;
+    "Check GitHub and Nix cache") check_downloads ;;
+    "Continue to installation")
+      if check_downloads; then
+        return 0
+      fi
+      if gum confirm --default=false \
+        "Downloads are not reachable. Continue only if everything is cached?"; then
+        return 0
+      fi
+      ;;
     "Open shell")
       printf '%s%s' "$SHOW_CURSOR" "$CLEAR"
       bash -l || true
       ;;
     esac
-    connectivity="$(nmcli -t -f CONNECTIVITY general 2>/dev/null || true)"
   done
+}
+
+receive_with_localsend() {
+  local gui_dir="/run/hao-localsend"
+  install -d -m 0700 -o nixos -g users "$gui_dir" /home/nixos/Downloads
+  screen_header "LocalSend" "Close the window to return to the installer"
+  printf '  Connect both devices to the same LAN; send a Mihomo config.yaml file.\n'
+  printf '  Note the saved path shown by LocalSend for the next step.\n\n'
+  printf '  Starting the temporary graphical session...\n'
+  if ! (
+    umask 077
+    runuser -u nixos -- env XDG_RUNTIME_DIR="$gui_dir" LIBSEAT_BACKEND=seatd \
+      dbus-run-session -- cage -- localsend_app
+  ); then
+    printf '\n  LocalSend could not open. Use a USB drive and import its config path instead.\n'
+  fi
+  gum input --prompt "Press Enter to return: " >/dev/null || true
+}
+
+import_clash_config() {
+  local source_file port proxy_url config_dir="$STATE_DIR/mihomo"
+  screen_header "Start Clash proxy" "Import an existing Mihomo-compatible YAML file"
+  printf '  Receive it with LocalSend, or mount a USB drive from the repair shell.\n'
+  printf '  The imported copy stays under /run, outside the target system.\n\n'
+  source_file="$(gum input --placeholder "/home/nixos/Downloads/config.yaml" \
+    --prompt "Config file: ")" || return 0
+  [[ -n $source_file && -f $source_file ]] || {
+    printf '\n  File not found.\n'
+    gum input --prompt "Press Enter: " >/dev/null || true
+    return 0
+  }
+  port="$(gum input --value "7890" --prompt "HTTP/mixed port: ")" || return 0
+  if [[ ! $port =~ ^[0-9]{1,5}$ ]] || ((10#$port < 1 || 10#$port > 65535)); then
+    printf '\n  Invalid port.\n'
+    gum input --prompt "Press Enter: " >/dev/null || true
+    return 0
+  fi
+  port="$((10#$port))"
+  install -d -m 0700 "$config_dir"
+  install -m 0644 /etc/hao-installer/geodata/geoip.dat "$config_dir/geoip.dat"
+  install -m 0644 /etc/hao-installer/geodata/geosite.dat "$config_dir/geosite.dat"
+  install -m 0600 "$source_file" "$config_dir/config.yaml"
+  if ! mihomo -t -d "$config_dir" -f "$config_dir/config.yaml" \
+    >"$STATE_DIR/mihomo-test.log" 2>&1; then
+    printf '\n  Invalid config. Details: %s/mihomo-test.log\n' "$STATE_DIR"
+    gum input --prompt "Press Enter: " >/dev/null || true
+    return 0
+  fi
+  systemctl restart hao-installer-mihomo.service
+  proxy_url="http://127.0.0.1:$port"
+  if ! curl -fsS --connect-timeout 5 --max-time 25 \
+    --proxy "$proxy_url" -o /dev/null https://cache.nixos.org/nix-cache-info; then
+    printf '\n  Proxy test failed. Check the config port, selected node and service log.\n'
+    printf '  Service log: journalctl -u hao-installer-mihomo\n'
+    gum input --prompt "Press Enter: " >/dev/null || true
+    return 0
+  fi
+
+  # Nix fetches via the daemon, so an installer-shell export alone is not enough.
+  install -d -m 0755 /run/systemd/system/nix-daemon.service.d
+  printf '[Service]\nEnvironment="http_proxy=%s" "https_proxy=%s" "HTTP_PROXY=%s" "HTTPS_PROXY=%s"\n' \
+    "$proxy_url" "$proxy_url" "$proxy_url" "$proxy_url" \
+    >/run/systemd/system/nix-daemon.service.d/hao-installer-proxy.conf
+  systemctl daemon-reload
+  systemctl restart nix-daemon.service
+  export http_proxy="$proxy_url" https_proxy="$proxy_url"
+  export HTTP_PROXY="$proxy_url" HTTPS_PROXY="$proxy_url"
+  HAO_PROXY_PORT="$port"
+  printf '\n  Clash is running on 127.0.0.1:%s; Nix downloads use it too.\n' "$port"
+  gum input --prompt "Press Enter: " >/dev/null || true
+}
+
+check_downloads() {
+  local failed=0
+  screen_header "Check downloads" "A LAN connection alone may not reach package sources"
+  if curl -fsS --connect-timeout 5 --max-time 25 \
+    -o /dev/null https://cache.nixos.org/nix-cache-info; then
+    printf '  Nix cache: reachable\n'
+  else
+    printf '  Nix cache: unreachable\n'
+    failed=1
+  fi
+  if curl -fsS --connect-timeout 5 --max-time 25 \
+    -o /dev/null https://github.com/; then
+    printf '  GitHub: reachable\n'
+  else
+    printf '  GitHub: unreachable\n'
+    failed=1
+  fi
+  printf '\n'
+  gum input --prompt "Press Enter to return: " >/dev/null || true
+  ((failed == 0))
 }
 
 select_host() {
   local detected choice
+  local -a hosts
   detected="HAO_DESKTOP"
   if lspci 2>/dev/null | grep -Eqi 'GTX 1060|Coffee Lake.*Mobile'; then
     detected="HAO_OFFLINE"
+  fi
+
+  if [[ $detected == "HAO_OFFLINE" ]]; then
+    hosts=("HAO_OFFLINE  - i7-8750H / GTX 1060 laptop" "HAO_DESKTOP  - i5-13600KF / RTX 4070 Super")
+  else
+    hosts=("HAO_DESKTOP  - i5-13600KF / RTX 4070 Super" "HAO_OFFLINE  - i7-8750H / GTX 1060 laptop")
   fi
 
   screen_header "Choose this computer" "Detected default: ${detected}"
@@ -331,8 +471,7 @@ select_host() {
     --cursor-prefix "> " \
     --selected-prefix "* " \
     --header "Select a hardware profile" \
-    "HAO_DESKTOP  - i5-13600KF / RTX 4070 Super" \
-    "HAO_OFFLINE  - i7-8750H / GTX 1060 laptop")" || exit 130
+    "${hosts[@]}")" || exit 130
 
   HOST_CONFIG="${choice%% *}"
 }
@@ -367,6 +506,15 @@ select_disk() {
   choice="$(printf '%s\n' "${choices[@]}" | gum choose --header "All data on the selected disk will be erased")" || exit 130
   TARGET_DISK="${choice%%  |*}"
   TARGET_DISK_LABEL="$choice"
+  TARGET_DISK="$(readlink -f "$TARGET_DISK")"
+  TARGET_DISK_ID="$(disk_identity "$TARGET_DISK")"
+  TARGET_DISK_SIZE="$(lsblk -dnbo SIZE "$TARGET_DISK")"
+  TARGET_DISK_SERIAL="$(lsblk -dnro SERIAL "$TARGET_DISK" | xargs)"
+  TARGET_DISK_WWN="$(lsblk -dnro WWN "$TARGET_DISK" | xargs)"
+  if [[ -z $TARGET_DISK_SERIAL && -z $TARGET_DISK_WWN ]]; then
+    echo "Selected disk has no stable serial or WWN: $TARGET_DISK" >>"$LOG_FILE"
+    failure_menu "The selected disk has no stable hardware identity"
+  fi
 }
 
 read_password() {
@@ -420,15 +568,23 @@ confirm_summary() {
 }
 
 verify_target_disk() {
-  local type
+  local type current_boot
   [[ -b $TARGET_DISK ]] || return 1
   type="$(lsblk -dnro TYPE "$TARGET_DISK")"
   [[ $type == "disk" ]] || return 1
-  [[ $TARGET_DISK != "$BOOT_DISK" ]] || return 1
+  [[ $(disk_identity "$TARGET_DISK") == "$TARGET_DISK_ID" ]] || return 1
+  [[ $(lsblk -dnbo SIZE "$TARGET_DISK") == "$TARGET_DISK_SIZE" ]] || return 1
+  [[ $(lsblk -dnro SERIAL "$TARGET_DISK" | xargs) == "$TARGET_DISK_SERIAL" ]] || return 1
+  [[ $(lsblk -dnro WWN "$TARGET_DISK" | xargs) == "$TARGET_DISK_WWN" ]] || return 1
+  current_boot="$(detect_boot_disk)" || return 1
+  [[ $current_boot == "$BOOT_DISK" && $TARGET_DISK != "$current_boot" ]] || return 1
 }
 
-check_sources() {
-  nix --accept-flake-config flake metadata --no-write-lock-file "$CONFIG_SOURCE"
+build_target_before_erase() {
+  # This exact configuration is copied to /mnt; hardware files are tracked and
+  # never replaced after the disk has been erased.
+  nix build --no-link --accept-flake-config --no-write-lock-file \
+    "$CONFIG_SOURCE#nixosConfigurations.${HOST_CONFIG}.config.system.build.toplevel"
 }
 
 partition_disk() {
@@ -449,14 +605,6 @@ copy_configuration() {
   cp -a "$CONFIG_SOURCE/." /mnt/etc/nixos/
 }
 
-generate_hardware_configuration() {
-  nixos-generate-config --root /mnt
-  install -m 0644 \
-    /mnt/etc/nixos/hardware-configuration.nix \
-    "/mnt/etc/nixos/hosts/${HOST_CONFIG}/hardware-configuration.nix"
-  rm -f /mnt/etc/nixos/configuration.nix /mnt/etc/nixos/hardware-configuration.nix
-}
-
 install_password_hash() {
   local target_dir="/mnt/var/lib/hao-secrets" hash_file="$STATE_DIR/password-hash"
   umask 077
@@ -468,7 +616,6 @@ install_password_hash() {
 }
 
 prepare_target_configuration() {
-  generate_hardware_configuration
   install_password_hash
 }
 
@@ -519,10 +666,10 @@ main() {
   confirm_summary
 
   INSTALL_STARTED_AT="$(date +%s)"
-  run_phase 1 6 "Checking locked Flake inputs" check_sources
+  run_phase 1 6 "Building the selected system before erasing" build_target_before_erase
   run_phase 2 6 "Partitioning and formatting ${TARGET_DISK}" partition_disk
   run_phase 3 6 "Copying the HAO configuration" copy_configuration
-  run_phase 4 6 "Detecting hardware and securing the password" prepare_target_configuration
+  run_phase 4 6 "Securing the login password" prepare_target_configuration
   PASSWORD_HASH=""
   run_phase 5 6 "Building and installing NixOS" install_system
   run_phase 6 6 "Syncing files to disk" sync

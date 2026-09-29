@@ -23,6 +23,10 @@
 | 🇨🇳 国内优化 | 清华/中科大镜像 + 超时优化 |
 | 🔧 CI | GitHub Actions `nix flake check` + 四主机/ISO eval + Release ISO 构建 |
 
+每周 `update-flake-lock` 会创建 PR；仓库所有者需在 GitHub 的
+`Settings → Actions → General → Workflow permissions` 启用
+`Allow GitHub Actions to create and approve pull requests`。
+
 ## 🖥️ 主机一览
 
 | 主机 | 机型 | 分支 | 说明 |
@@ -95,6 +99,7 @@ opencode auth login
 ```
 
 登录凭据由各 CLI 保存在当前用户目录中，不会写入 Git 仓库或 Nix Store。Agent 仍保留正常的命令确认流程，不会默认获得免确认执行权限。
+`admin` 同时被授权进行免密远程系统调试；该账户及其 SSH 密钥应按 root 权限保护。
 
 ## 📚 相关链接
 

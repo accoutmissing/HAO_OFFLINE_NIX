@@ -16,7 +16,7 @@ in
     users.users.${myvars.username}.openssh.authorizedKeys.keys =
       myvars.hermesSshAuthorizedKeys;
 
-    # ── 免密 sudo（远程管理用） ─────────────────────────────────────────
+    # ── 免密 sudo（远程调试用，nixos-rebuild 可获得完整 root 权限） ────
     security.sudo.extraRules = [
       {
         users = [ myvars.username ];
@@ -24,8 +24,8 @@ in
           # 必须用 /run/current-system/sw/bin 稳定路径：sudo 会把规则路径与
           # 实际命令都解析到真实 store 路径后比较，写死 /nix/store/...
           # 会因每次 rebuild 哈希变化而失配。
-          # systemctl 不可无限制 NOPASSWD（`systemctl edit` 可逃逸拿 root shell），
-          # 只放行远程调试必要的动词；status 普通用户本就可查，不放行。
+          # 限制 systemctl 动词便于审计；这不是权限隔离，nixos-rebuild
+          # 和 Nix trusted-users 已让 admin 拥有 root 等价能力。
           { command = "/run/current-system/sw/bin/nixos-rebuild"; options = [ "NOPASSWD" ]; }
           { command = "/run/current-system/sw/bin/systemctl start *"; options = [ "NOPASSWD" ]; }
           { command = "/run/current-system/sw/bin/systemctl stop *"; options = [ "NOPASSWD" ]; }

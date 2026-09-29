@@ -15,6 +15,9 @@ let
       bashInteractive
       btrfs-progs
       coreutils
+      curl
+      cage
+      dbus
       dosfstools
       findutils
       gawk
@@ -24,12 +27,14 @@ let
       jq
       less
       mkpasswd
+      mihomo
       networkmanager
       parted
       pciutils
       rsync
       systemd
       util-linux
+      localsend
       inputs.disko.packages.${system}.disko
     ];
     text = scriptBody ./scripts/hao-installer.sh;
@@ -45,6 +50,12 @@ in
   # 使用 NetworkManager 提供 nmtui，安装前即可连接 Wi-Fi。
   networking.networkmanager.enable = true;
   networking.wireless.enable = lib.mkForce false;
+  networking.firewall.allowedTCPPorts = [ 53317 ];
+  networking.firewall.allowedUDPPorts = [ 53317 ];
+
+  # Cage gives LocalSend a temporary graphical session without turning the
+  # installer into a full desktop ISO. The session returns to the TUI on exit.
+  services.seatd.enable = true;
 
   nixpkgs.config.allowUnfree = true;
   nix.settings = {
@@ -57,6 +68,20 @@ in
 
   environment.systemPackages = [ haoInstaller ];
   environment.etc."hao-installer/config".source = self.outPath;
+  environment.etc."hao-installer/geodata/geoip.dat".source = "${pkgs.v2ray-rules-dat}/share/v2ray/geoip.dat";
+  environment.etc."hao-installer/geodata/geosite.dat".source = "${pkgs.v2ray-rules-dat}/share/v2ray/geosite.dat";
+
+  systemd.services.hao-installer-mihomo = {
+    description = "Temporary Clash proxy for the HAO installer";
+    after = [ "NetworkManager.service" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.mihomo}/bin/mihomo -d /run/hao-installer/mihomo -f /run/hao-installer/mihomo/config.yaml";
+      Restart = "on-failure";
+      RestartSec = 3;
+      UMask = "0077";
+    };
+  };
 
   # 保留 tty2 作为维修终端，tty1 完全交给安装器。
   systemd.services."getty@tty1".enable = false;
@@ -65,8 +90,10 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [
       "NetworkManager.service"
+      "seatd.service"
       "systemd-vconsole-setup.service"
     ];
+    wants = [ "seatd.service" ];
     conflicts = [ "getty@tty1.service" ];
     environment = {
       HAO_CONFIG_SOURCE = "/etc/hao-installer/config";
