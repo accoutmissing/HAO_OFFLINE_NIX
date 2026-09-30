@@ -28,3 +28,6 @@ jobs:
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_OFFLINE.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_WSL.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#packages.x86_64-linux.hao-installer-iso.drvPath
+
+      # GTX 1060 uses the legacy branch; validate it against the locked kernel.
+      - run: nix build --no-link --no-write-lock-file .#nixosConfigurations.HAO_OFFLINE.config.hardware.nvidia.package.mod

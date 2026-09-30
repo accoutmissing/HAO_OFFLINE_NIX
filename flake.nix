@@ -149,6 +149,12 @@
       # ── CI 检查 ───────────────────────────────────────────────────────
       checks.${system} = {
         formatting = treefmtEval.config.build.check self;
+        installer-failure-handling = pkgs.runCommand "installer-failure-handling"
+          { nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep ]; }
+          ''
+            bash ${./tests/installer-run-phase.sh} ${./installer/scripts/hao-installer.sh}
+            touch "$out"
+          '';
       };
     };
 

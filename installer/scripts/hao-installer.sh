@@ -206,7 +206,12 @@ run_phase() {
   write_state "$phase" "$total" "$title" "running"
   printf '\n[%s/%s] %s\n' "$phase" "$total" "$title" >>"$LOG_FILE"
 
-  "$@" >>"$LOG_FILE" 2>&1 &
+  # Background failures must return to the foreground recovery UI. Keep
+  # errexit enabled so a failed safety check cannot continue to disk writes.
+  (
+    trap - ERR
+    "$@"
+  ) >>"$LOG_FILE" 2>&1 &
   pid=$!
   phase_started="$(date +%s)"
 
@@ -217,10 +222,11 @@ run_phase() {
     sleep 0.5
   done
 
-  set +e
-  wait "$pid"
-  status=$?
-  set -e
+  if wait "$pid"; then
+    status=0
+  else
+    status=$?
+  fi
 
   if ((status != 0)); then
     write_state "$phase" "$total" "$title" "failed"
@@ -676,4 +682,6 @@ main() {
   finish_installation
 }
 
-main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

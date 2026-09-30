@@ -14,6 +14,8 @@
 
   # ── NVIDIA 驱动 ─────────────────────────────────────────────────────
   hardware.nvidia = {
+    # Pascal GPUs are no longer supported by the current production branch.
+    branch = "legacy_580";
     modesetting.enable = true;
     powerManagement.enable = true;
     # Pascal 架构不支持 fine-grained PM 和 Dynamic Boost

@@ -521,15 +521,31 @@ sudo --preserve-env=HAO_SECRETS_FILE nixos-rebuild switch --impure --flake .#HAO
 
 打开终端（启动器里搜 "kitty" 或 "terminal"），运行：
 
+下面会自动保留本机硬件配置。若修改过其他模块，也要在构建前迁入新目录。
+
 ```bash
-# 安装器已复制发布版本的配置；先保留备份，再拉取后续更新
-sudo mv /etc/nixos /etc/nixos.installer-backup
-sudo git clone --branch main https://github.com/accoutmissing/HAO_OFFLINE_NIX.git /etc/nixos
+# 在新目录准备仓库，保留本机硬件配置；准备失败时原配置仍可用
+(
+  set -e
+  HOST_CONFIG=HAO_DESKTOP # 笔记本改成 HAO_OFFLINE
+  BACKUP_DIR="/etc/nixos.installer-backup-$(date +%Y%m%d-%H%M%S)"
+  NEXT_DIR="$(sudo mktemp -d /etc/nixos-upstream.XXXXXX)"
+  sudo git clone --branch main https://github.com/accoutmissing/HAO_OFFLINE_NIX.git "$NEXT_DIR"
+  sudo chmod 0755 "$NEXT_DIR"
+  sudo cp -a "/etc/nixos/hosts/$HOST_CONFIG/hardware-configuration.nix" \
+    "$NEXT_DIR/hosts/$HOST_CONFIG/hardware-configuration.nix"
+  sudo git -C "$NEXT_DIR" add "hosts/$HOST_CONFIG/hardware-configuration.nix"
+  # 如有其他本机修改，在这里迁入 NEXT_DIR 后再继续
+  sudo nixos-rebuild build --flake "$NEXT_DIR#$HOST_CONFIG"
+  sudo mv /etc/nixos "$BACKUP_DIR"
+  sudo mv "$NEXT_DIR" /etc/nixos
+)
 cd /etc/nixos
 ```
 
-两个主机的硬件配置都已包含在仓库中。确认新配置可正常重建后，再处理
-`/etc/nixos.installer-backup` 备份；以后所有修改都在 `/etc/nixos` 里做。
+硬件配置必须保留本机的分区路径、EFI 设置和驱动，尤其是双系统；仓库模板不能
+直接替代它。若还修改过其他模块，先把这些修改迁入 `NEXT_DIR`，再执行构建与
+替换步骤。确认新配置能重建且重启正常后，再处理带时间戳的备份。
 
 ### 日常使用
 
@@ -556,13 +572,16 @@ opencode auth login
 
 ### 更新系统
 
-以后我更新了配置，你拉取最新版本更新系统只要两行：
+以后拉取最新配置并更新系统：
 
 ```bash
 cd /etc/nixos
-git pull
-sudo nixos-rebuild switch --flake .#HAO_DESKTOP
+sudo git pull --ff-only
+sudo nixos-rebuild switch --flake .#HAO_DESKTOP # 笔记本用 HAO_OFFLINE
 ```
+
+如果更新与本机硬件配置冲突，先合并并保留本机分区和驱动设置，再重建；不要用
+仓库模板覆盖这些设置。
 
 ### 清理垃圾（释放空间）
 

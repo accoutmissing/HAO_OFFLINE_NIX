@@ -35,6 +35,8 @@ let
       systemd
       util-linux
       localsend
+      config.nix.package
+      config.system.build.nixos-install
       inputs.disko.packages.${system}.disko
     ];
     text = scriptBody ./scripts/hao-installer.sh;
@@ -56,6 +58,7 @@ in
   # Cage gives LocalSend a temporary graphical session without turning the
   # installer into a full desktop ISO. The session returns to the TUI on exit.
   services.seatd.enable = true;
+  users.users.nixos.extraGroups = [ "seat" ];
 
   nixpkgs.config.allowUnfree = true;
   nix.settings = {
