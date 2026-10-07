@@ -104,8 +104,18 @@ in
       User = "postgres";
     };
     script = ''
-      ${config.services.postgresql.package}/bin/psql -d hindsight \
-        -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+      # 首次激活时数据库可能还没建好（ensureDatabases 在 postgresql.service 的激活阶段完成），
+      # 直接 psql 会报 database "hindsight" does not exist；这里自带重试，避免首启失败。
+      for attempt in $(seq 1 30); do
+        if ${config.services.postgresql.package}/bin/psql -d hindsight \
+          -c 'CREATE EXTENSION IF NOT EXISTS vector;'; then
+          exit 0
+        fi
+        echo "hindsight 库尚未就绪（第 $attempt 次重试），2 秒后继续..."
+        sleep 2
+      done
+      echo "hindsight 库 60 秒内未就绪" >&2
+      exit 1
     '';
   };
 
