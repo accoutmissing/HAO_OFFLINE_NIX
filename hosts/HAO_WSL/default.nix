@@ -57,6 +57,10 @@
     # 本发行版的 systemd 用户会话会启动失败（journal 报
     # "Failed to spawn executor: Device or resource busy"）。固定为非 1000 的 uid 避开该冲突。
     uid = 1500;
+    # Home Manager 通过 systemd 用户服务激活 home 配置，而发行版是被 root 会话
+    # （保活脚本）拉起的，不会自然产生 admin 的用户会话；linger 让
+    # user@1500 开机即起，dotfiles 才会在没有登录的情况下也落地。
+    linger = true;
     extraGroups = [ "wheel" "docker" ];
     shell = pkgs.zsh;
   };

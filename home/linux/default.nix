@@ -14,6 +14,8 @@
 
     # 工具
     bat # cat 替代（zsh alias cat=bat）
+    ripgrep # 下面 shellAliases 里的 grep=rg 需要它；桌面主机由 base 模块提供，
+    # 但精简主机（如 HAO_WSL）不导入 base 模块，放在这里才能自洽
     lazygit
     delta # git diff 高亮
     gh # GitHub CLI
