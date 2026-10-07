@@ -158,6 +158,9 @@ in
         "LD_LIBRARY_PATH=${nativeLibPath}"
         # 本机 unix socket + peer 认证（服务以 hindsight 用户运行，角色同名）
         "HINDSIGHT_API_DATABASE_URL=postgresql://hindsight@/hindsight?host=/run/postgresql"
+        # 本机无 GPU 直通，强制 CPU 模式，省去设备探测与可能的 CUDA 试探；
+        # 本地 embedding（默认 provider=local，torch）是 recall 延迟的主要成分。
+        "HINDSIGHT_API_EMBEDDINGS_LOCAL_FORCE_CPU=true"
       ];
     };
   };

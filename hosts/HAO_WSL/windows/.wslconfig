@@ -1,15 +1,24 @@
 [wsl2]
 # vmIdleTimeout is in MILLISECONDS: 0 means "shut down as soon as idle", which
-# used to kill the distro (and every service in it). This value is only a
-# fallback -- the real fix is the keep-alive script, see windows\README.md.
+# used to kill the distro (and every service in it). 86400000 = 24h fallback.
+# NOTE: per MS docs the real per-distro knob is [general] instanceIdleTimeout.
 vmIdleTimeout=86400000
 networkingMode=mirrored
-memory=10GB
-processors=4
-# 2026-10-07: was 2GB and got filled up during a nixos-rebuild (cold pages
-# stayed in swap while 7.8GB RAM was free). With 10GB RAM a small 512M swap
-# is only a safety valve; raise it again only if memory pressure returns.
+# 2026-10-07 tuning: host is Ryzen 5 9600X (6C12T / 31.2GB). MS default for
+# processors is "all logical processors"; we were capped at 4, which throttled
+# Hindsight's local embedding (torch, CPU-bound). 8 leaves headroom for Windows.
+# memory 10GB -> 12GB: Penpot (8 containers, ~1.2GB) + Hindsight (~0.2GB, peak
+# 1.4GB during model load) + rebuild headroom.
+memory=12GB
+processors=8
+# 2026-10-07: was 2GB and got filled up during a nixos-rebuild. 512M as valve.
 swap=512M
+
+[general]
+# MS default is 15000 (15s): a distro with no attached session is stopped after
+# 15s. -1 disables auto-shutdown -- the official mechanism behind the earlier
+# keep-alive script.
+instanceIdleTimeout=-1
 
 [experimental]
 autoMemoryReclaim=gradual

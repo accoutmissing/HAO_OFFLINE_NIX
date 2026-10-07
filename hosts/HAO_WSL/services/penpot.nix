@@ -31,8 +31,10 @@ let
   postgresMount = "--mount=type=volume,src=penpot_penpot_postgres_v15,dst=/var/lib/postgresql/data";
 
   penpotFlags = {
+    # disable-telemetry：默认 telemetry 开着，会向 Penpot 官方端点发遥测请求
+    # （国内网络下易超时重试、占后台 worker）。flag 命名规则为 <enable|disable>-<flag>。
     PENPOT_FLAGS =
-      "disable-email-verification enable-smtp enable-prepl-server disable-secure-session-cookies enable-mcp";
+      "disable-email-verification enable-smtp enable-prepl-server disable-secure-session-cookies enable-mcp disable-telemetry";
     PENPOT_PUBLIC_URI = "https://10.144.144.7:9001";
     PENPOT_HTTP_SERVER_MAX_BODY_SIZE = "367001600";
     PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE = "367001600";
