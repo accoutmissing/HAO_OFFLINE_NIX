@@ -87,5 +87,10 @@
   # 不校验密码），故显式声明允许无密码登录；这也是官方留给此类场景的开关。
   users.allowNoPasswordLogin = true;
 
+  # WSL 没有 tty1 控制台，NixOS 默认启用的 getty@tty1 必然启动失败（start-limit-hit），
+  # 这会让激活结束时 `switch-to-configuration` 以退出码 4 结束，并把系统标为 degraded，
+  # 从而污染自动化判断（Ubuntu 等其它 WSL 发行版同样有这个无害的失败单元）。
+  systemd.services."getty@tty1".enable = false;
+
   system.stateVersion = "25.05";
 }
