@@ -6,7 +6,10 @@ vmIdleTimeout=86400000
 networkingMode=mirrored
 memory=10GB
 processors=4
-swap=2GB
+# 2026-10-07: was 2GB and got filled up during a nixos-rebuild (cold pages
+# stayed in swap while 7.8GB RAM was free). With 10GB RAM a small 512M swap
+# is only a safety valve; raise it again only if memory pressure returns.
+swap=512M
 
 [experimental]
 autoMemoryReclaim=gradual
