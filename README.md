@@ -33,7 +33,7 @@
 |------|------|------|------|
 | **HAO_OFFLINE** | 神舟战神 Z7-KP7Z | main | i7-8750H + GTX 1060，Optimus 按需调用 |
 | **HAO_DESKTOP** | 自组台式机 | main | i5-13600KF + RTX 4070S，独显常开 |
-| **HAO_WSL** | Windows WSL2 | main | tarball 导入的测试环境，uid 1500 规避 WSL 用户会话缺陷 |
+| **HAO_WSL** | Windows WSL2 | main | Penpot + Hindsight 常驻（声明式容器/systemd）；uid 1500 规避 WSL 用户会话缺陷 |
 | **HAO_SERVER** | 家庭服务器 / VPS | **HAO_SERVER** | 无头服务器，fail2ban + 容器 + 自动更新 |
 
 ## 🚀 快速开始

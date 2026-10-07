@@ -24,6 +24,11 @@
 { pkgs, ... }:
 
 {
+  imports = [
+    ./services/penpot.nix
+    ./services/hindsight.nix
+  ];
+
   # ── WSL 核心（nixos-wsl 模块） ────────────────────────────────
   wsl = {
     enable = true;
@@ -48,7 +53,7 @@
     # 本发行版的 systemd 用户会话会启动失败（journal 报
     # "Failed to spawn executor: Device or resource busy"）。固定为非 1000 的 uid 避开该冲突。
     uid = 1500;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "docker" ];
     shell = pkgs.zsh;
   };
   programs.zsh.enable = true;
@@ -60,7 +65,18 @@
     curl
     wget
     htop
+    # 迁移与运维：容器运行时由 services/penpot.nix 开启，这里只是命令行工具
+    docker
+    docker-compose
+    python314 # Hindsight venv 解释器
+    nodejs_22 # Hindsight 控制面
+    rsync
+    jq
   ];
+
+  # 局域网访问：Penpot 9001 / mailcatcher 1080 / Hindsight 8888、9999
+  # （WSL 走 mirrored 网络，与 Windows 共享 10.144.144.7）
+  networking.firewall.allowedTCPPorts = [ 1080 8888 9001 9999 ];
 
   # ── 二进制缓存镜像（与主配置一致，加速下载） ────────────────
   nix.settings.substituters = [
