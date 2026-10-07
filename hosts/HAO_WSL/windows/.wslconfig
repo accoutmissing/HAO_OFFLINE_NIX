@@ -1,0 +1,13 @@
+[wsl2]
+# vmIdleTimeout is in MILLISECONDS: 0 means "shut down as soon as idle", which
+# used to kill the distro (and every service in it). This value is only a
+# fallback -- the real fix is the keep-alive script, see windows\README.md.
+vmIdleTimeout=86400000
+networkingMode=mirrored
+memory=10GB
+processors=4
+swap=2GB
+
+[experimental]
+autoMemoryReclaim=gradual
+hostAddressLoopback=true
