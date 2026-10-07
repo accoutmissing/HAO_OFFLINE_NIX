@@ -20,6 +20,20 @@
 #
 # 数据：原 /home/hindsight（含 .pg0 内嵌 Postgres 数据、.cache 模型缓存）迁到
 # /var/lib/hindsight，解包后需 chown -R hindsight:hindsight。
+#
+# ⚠️ 数据库迁移/还原的正确做法（2026-10-07 踩过的坑）：
+#   把 pg_dump 导出的 SQL 直接 psql 到一个**已由应用迁移建好表**的库里，
+#   表面只报 “relation already exists”，实际那张表的 COPY 数据不会进去——
+#   当时 memory_units / memory_links / unit_entities / chunks 都是 0，
+#   而 documents / entities 正常，看起来像“记忆全没了”。
+#   正确步骤（实测 0 错误）：
+#     systemctl stop hindsight hindsight-cp
+#     sudo -u postgres psql -c 'DROP DATABASE hindsight WITH (FORCE);'
+#     sudo -u postgres psql -c 'CREATE DATABASE hindsight OWNER hindsight;'
+#     sudo -u postgres psql -d hindsight -v ON_ERROR_STOP=0 -f <dump.sql>
+#   还原后核对行数：memory_units=204 / documents=28 / chunks=28 / entities=226 /
+#   unit_entities=403 / memory_links=3269 / async_operations=62，
+#   API 侧 /v1/default/banks 应显示 bank 的 fact_count=204。
 
 { config, lib, pkgs, ... }:
 
