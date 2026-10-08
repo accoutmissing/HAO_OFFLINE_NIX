@@ -15,6 +15,7 @@ in
     # ── Steam（Proton 运行 AAA 游戏） ──────────────────────────────────
     programs.steam = {
       enable = true;
+      extraCompatPackages = [ pkgs.proton-ge-bin ];
       gamescopeSession.enable = true;
       protontricks.enable = true;
       extest.enable = true;
@@ -34,6 +35,7 @@ in
       vkbasalt # Vulkan 后处理（锐化/增强）
       mangohud
       gamescope
+      wineWow64Packages.stable # 日用 Wine，支持 32/64 位 Windows 程序
       winetricks
       protonplus
       umu-launcher

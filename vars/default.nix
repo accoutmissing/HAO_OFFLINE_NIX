@@ -1,9 +1,9 @@
 _:
 let
-  # ── 二进制缓存（flake.nix nixConfig 与 base/nix.nix 共用） ──────
-  # 注意：清华/中科大的 nix-channels/store 只缓存 channel tarball，
-  # 对 nixpkgs 构建产物几乎无命中（真正的构建缓存是 cache.nixos.org）；
-  # 保留仅供 channel 场景，不要指望它给普通构建加速。
+  # ── 二进制缓存（base/nix.nix 使用；与 flake.nix 的 nixConfig 保持同步） ──────
+  # 清华/中科大的 nix-channels/store 提供 Nixpkgs 二进制缓存，不仅是 channel tarball。
+  # 中科大使用动态缓存；缓存命中和下载速度需按具体包及网络情况判断。
+  # Nix 按缓存的 Priority 选择源（数值越小越优先），不只看列表顺序。
   cachixSubstituters = [
     "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
     "https://mirrors.ustc.edu.cn/nix-channels/store"
@@ -47,6 +47,6 @@ in
     # "ssh-ed25519 AAAA...hermes-cloud-key"
   ];
 
-  # ── Nix 缓存（供 flake.nix nixConfig 与 base/nix.nix 引用） ──
+  # ── Nix 缓存（供 base/nix.nix 引用） ──
   inherit cachixSubstituters cachixTrustedPublicKeys;
 }
