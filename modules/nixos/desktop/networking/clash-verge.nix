@@ -7,12 +7,7 @@
     clash-verge-rev # GUI 客户端
   ];
 
-  # 允许 mihomo 使用 tun 模式
-  # 注意：这需要 sudo 或 setcap 权限
-  # 使用 clash-verge-rev 的 tun mode 设置即可
-
-  # ── 首次启动 ─────────────────────────────────────────────────────
-  # clash-verge-rev 需要 root 权限设置 tun/service 模式：
-  #   sudo clash-verge-rev
-  # 日常使用普通用户启动即可。
+  # 当前只安装客户端和核心，没有启用系统服务或 TUN 权限。
+  # 普通代理可由用户启动；TUN 需另行配置 programs.clash-verge.serviceMode
+  # 及服务访问组。不要通过 sudo 启动整个图形客户端来安装服务。
 }

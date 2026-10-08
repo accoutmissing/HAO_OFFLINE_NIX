@@ -10,9 +10,8 @@
       substituters = myvars.cachixSubstituters;
       trusted-public-keys = myvars.cachixTrustedPublicKeys;
 
-      # 关闭 auto-optimise：2.20 及更早的实现（in-place hardlink 修改）
-      # 会让每次 rebuild 明显变慢；2.21+ 已重写实现，官方推荐开启，
-      # 但个人实测仍保持关闭，如想试可改回 true 观察 rebuild 耗时。
+      # 保持 Nix 默认的关闭状态；开启会用硬链接去重 store 文件，节省磁盘，
+      # 但也增加文件扫描开销，可按本机磁盘空间和构建耗时决定。
       auto-optimise-store = false;
 
       experimental-features = [ "nix-command" "flakes" ];

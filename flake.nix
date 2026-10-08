@@ -110,9 +110,9 @@
         # Windows WSL 测试环境（无引导/无桌面，精简配置）
         # 仍然接 Home Manager：与桌面主机共用 home/linux（用户名、家目录都一致），
         # 让 WSL 里的 shell 体验（aliases / starship / bat / lazygit / gh / git 身份）
-        # 与笔记本、台式机一致。注意 HM 靠 systemd 用户服务激活 home 配置，
-        # 而发行版是被 root 会话拉起的，所以 hosts/HAO_WSL 里同时开了
-        # users.users.admin.linger，让 user@1500 开机即起。
+        # 与笔记本、台式机一致。HM 默认通过系统服务激活 home 配置；
+        # hosts/HAO_WSL 另开 users.users.admin.linger，保证常驻用户服务
+        # 在没有 admin 登录会话时也能启动。
         HAO_WSL = lib.nixosSystem {
           inherit system;
           specialArgs = inputs // {

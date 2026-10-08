@@ -278,7 +278,7 @@ nano secrets/easytier.env
 #### A-4：自动分区（一条命令搞定）
 
 ```bash
-sudo nix run github:accoutmissing/HAO_OFFLINE_NIX/v1.2.5#disko -- \
+sudo nix run .#disko -- \
   --mode disko hosts/HAO_DESKTOP/disko-config.nix
 ```
 
@@ -307,7 +307,7 @@ nano hosts/HAO_DESKTOP/disko-config.nix
 # 将暂存密钥安装到目标系统；目录权限为 0700，文件权限为 0600
 sudo bash scripts/install-secrets.sh /mnt
 
-sudo nixos-install --flake .#HAO_DESKTOP
+sudo nixos-install --no-root-passwd --flake .#HAO_DESKTOP
 ```
 
 > 把 `HAO_DESKTOP` 换成你实际的机器名（见 A-3）。
@@ -442,7 +442,7 @@ nano hosts/HAO_DESKTOP/hardware-configuration.nix
 
 ```bash
 sudo bash scripts/install-secrets.sh /mnt
-sudo nixos-install --flake .#HAO_DESKTOP
+sudo nixos-install --no-root-passwd --flake .#HAO_DESKTOP
 ```
 
 等 10-30 分钟，安装完成后重启；登录时使用前面配置的 `admin` 用户密码：
@@ -554,11 +554,11 @@ cd /etc/nixos
 | 打开软件 | 按 `Win + 空格`，输入软件名，回车 |
 | 调音量 | 键盘上的音量键 / 右上角状态栏点音量图标 |
 | 调亮度 | 键盘上的亮度键 |
-| 锁屏 | 按 `Win + L` |
+| 锁屏 | 按 `Win + Alt + L` |
 | 连 WiFi | 右上角状态栏点网络图标 |
 | 截图 | 按 `Print Screen` 键 |
 | 呼出 AI Agent | 按 `Win + Shift + Ctrl + A`，再次按下可隐藏且不丢失会话 |
-| 关机 | 终端输入 `sudo reboot`，或右上角菜单里有关机选项 |
+| 关机 | 终端输入 `sudo poweroff`，或右上角菜单里有关机选项 |
 
 第一次使用 AI Agent 时，打开终端并登录你要使用的服务：
 

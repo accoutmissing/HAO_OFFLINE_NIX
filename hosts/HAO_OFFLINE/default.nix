@@ -18,17 +18,15 @@
   services.tlp = {
     enable = true;
     settings = {
-      # 长期插电防电池鼓包：60% 开始充电，80% 停止（部分神舟 BIOS 支持，不支持的机型自动忽略）
+      # 60% 开始充电，80% 停止；阈值需要电池驱动支持，用 tlp-stat -b 实机核对。
       START_CHARGE_THRESH_BAT0 = 60;
       STOP_CHARGE_THRESH_BAT0 = 80;
-      # 合盖不采取任何操作（服务器不能睡）；外接显示器场景同样保持唤醒
-      LID_CLOSE_ACTION = "none";
-      # 交流电下禁用 USB 自动挂起，避免外接设备/USB 重定向异常
+      # 插电和电池供电时均禁用 USB 自动挂起，避免外接设备/USB 重定向异常。
       USB_AUTOSUSPEND = 0;
     };
   };
 
-  # 合盖不休眠由 logind 兜底（TLP 不接管 logind）
+  # 合盖行为由 logind 管理；LID_CLOSE_ACTION 不是 TLP 的配置参数。
   services.logind.settings.Login = {
     HandleLidSwitch = "ignore";
     HandleLidSwitchExternalPower = "ignore";

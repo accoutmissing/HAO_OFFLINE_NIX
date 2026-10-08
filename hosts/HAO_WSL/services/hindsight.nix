@@ -30,7 +30,7 @@
 #     systemctl stop hindsight hindsight-cp
 #     sudo -u postgres psql -c 'DROP DATABASE hindsight WITH (FORCE);'
 #     sudo -u postgres psql -c 'CREATE DATABASE hindsight OWNER hindsight;'
-#     sudo -u postgres psql -d hindsight -v ON_ERROR_STOP=0 -f <dump.sql>
+#     sudo -u postgres psql -X -d hindsight -v ON_ERROR_STOP=1 -f <dump.sql>
 #   还原后核对行数：memory_units=204 / documents=28 / chunks=28 / entities=226 /
 #   unit_entities=403 / memory_links=3269 / async_operations=62，
 #   API 侧 /v1/default/banks 应显示 bank 的 fact_count=204。

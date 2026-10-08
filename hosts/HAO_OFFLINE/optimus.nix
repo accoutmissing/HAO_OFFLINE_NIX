@@ -1,6 +1,6 @@
 # ── NVIDIA Optimus 配置（GTX 1060 6GB） ───────────────────────────
 # 方案：PRIME Offload — 默认用 Intel 核显省电，游戏/渲染时按需调用独显
-# 用法：prime-run <程序>  或  nvidia-offload <程序>
+# 用法：nvidia-offload <程序>
 
 { config, lib, pkgs, ... }:
 
@@ -8,7 +8,7 @@
   # ── 系统包 ──────────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [
     nvtopPackages.full # GPU 监控（Intel + NVIDIA；nvtop 顶层别名已移除）
-    # prime-run / nvidia-offload 由 hardware.nvidia.prime.offload 内置提供
+    # nvidia-offload 由 hardware.nvidia.prime.offload 内置提供
     # nvidia-prime 独立包已在 nixos-unstable 中移除
   ];
 

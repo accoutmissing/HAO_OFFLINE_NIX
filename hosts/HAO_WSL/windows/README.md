@@ -1,7 +1,8 @@
 # HAO_WSL 的 Windows 侧设置
 
 本目录存放 NixOS 发行版之外的 Windows 宿主机配置，保证换机或重装后能按同一套流程复现。
-发行版内部的一切（Penpot / Hindsight / 数据库 / 依赖）都在 Nix 配置里，见 `../services/`。
+Penpot / Hindsight / 数据库的服务配置见 `../services/`。Hindsight 的 venv、npm
+依赖和应用数据仍在 `/var/lib` 中，需按模块注释另行初始化和备份。
 
 ## 1. 导入发行版
 
@@ -34,23 +35,26 @@ wsl -d HAO_WSL -u root -- nixos-rebuild switch --flake github:accoutmissing/HAO_
 
 - `networkingMode=mirrored`：发行版与 Windows 共享局域网 IP，Penpot/Hindsight 直接以
   `10.144.144.7:9001|8888|9999` 提供服务，不需要 `netsh portproxy`
-- `memory=10GB`：Penpot（8 容器）与 Hindsight（约 1.3GB 常驻）并存的最低余量
-- `vmIdleTimeout=86400000`：只是兜底。**它不能保证常驻**，原因见下节
+- `memory=12GB`、`processors=8`：当前宿主机的资源上限，换机时按可用资源调整
+- `[general] instanceIdleTimeout=-1`：禁用发行版空闲自动退出
+- `vmIdleTimeout=86400000`：WSL 虚拟机空闲超时为 24 小时，单位为毫秒
 
-## 3. 为什么需要保活脚本（关键）
+## 3. 常驻设置与保活脚本
 
-实测（WSL 2.7.10 / 内核 6.18.33.2）：**没有任何 `wsl.exe` 客户端挂载时，WSL 会把发行版停掉**，
-于是 Penpot 与 Hindsight 一起下线。把 `.wslconfig` 的 `vmIdleTimeout` 从 `0` 改成 24 小时
-并不能阻止该行为（该值单位是毫秒，`0` 反而等于“空闲即关”）。
+微软当前文档提供 `[general] instanceIdleTimeout`：默认 15000 毫秒，设为 `-1`
+可禁用发行版空闲自动退出。模板已配置该项；`vmIdleTimeout` 管的是整个 WSL 虚拟机，
+两者不能混为一谈。单独启动 systemd 服务也不会保证 WSL 常驻。
+见 [微软配置文档](https://learn.microsoft.com/en-us/windows/wsl/wsl-config)。
 
-`wsl-keepalive.ps1` 的做法是循环挂一个长命令：
+保留 `wsl-keepalive.ps1` 作为旧版 WSL 的兼容兜底，它循环挂一个长命令：
 
 ```powershell
 while ($true) { wsl.exe -d HAO_WSL -u root -- /run/current-system/sw/bin/sleep 600 | Out-Null }
 ```
 
 每 10 分钟续一次会话，VM 若被关掉则下一轮自动重新拉起；脚本带命名互斥量，重复启动会立即退出。
-注意脚本注释必须**纯 ASCII**——Windows PowerShell 5.1 读取无 BOM 的 UTF-8 中文注释会直接解析失败。
+调用失败时等待 10 秒，避免不断重试。脚本使用 ASCII 注释，以免 Windows PowerShell 5.1
+按本地编码读取无 BOM 的 UTF-8 文件时产生歧义。
 
 ## 4. 登录自启（两个入口，互为兜底）
 

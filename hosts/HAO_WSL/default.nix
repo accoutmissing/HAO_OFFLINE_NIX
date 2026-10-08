@@ -22,8 +22,8 @@
 #   `wsl -d <其它发行版> -u root` 或先 `wsl --terminate <其它发行版>` 规避。
 #
 # Windows 宿主机侧的设置（导入发行版、.wslconfig、保活脚本、登录自启）见
-# ./windows/README.md：那里记录了“无客户端挂载时 WSL 会停掉发行版”这一必须靠保活
-# 脚本解决的行为，以及计划任务/启动文件夹的复现步骤。
+# ./windows/README.md：模板使用 instanceIdleTimeout=-1 禁用发行版空闲退出，
+# 并保留保活脚本以及计划任务/启动文件夹作为旧版 WSL 的兼容兜底。
 
 { pkgs, ... }:
 
@@ -57,9 +57,8 @@
     # 本发行版的 systemd 用户会话会启动失败（journal 报
     # "Failed to spawn executor: Device or resource busy"）。固定为非 1000 的 uid 避开该冲突。
     uid = 1500;
-    # Home Manager 通过 systemd 用户服务激活 home 配置，而发行版是被 root 会话
-    # （保活脚本）拉起的，不会自然产生 admin 的用户会话；linger 让
-    # user@1500 开机即起，dotfiles 才会在没有登录的情况下也落地。
+    # Home Manager 默认通过系统服务激活 home 配置。linger 另用于让
+    # user@1500 在没有 admin 登录会话时启动，支持常驻 systemd 用户服务。
     linger = true;
     extraGroups = [ "wheel" "docker" ];
     shell = pkgs.zsh;

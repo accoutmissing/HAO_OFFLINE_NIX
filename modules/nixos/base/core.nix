@@ -1,6 +1,7 @@
 { lib, ... }:
 {
-  # ── 系统版本（固定避免 nixpkgs-unstable 推进时意外切换） ─────────
+  # 状态兼容版本：保留首次安装时的数据格式/默认值，不用于锁定软件版本。
+  # 软件版本由 flake.lock 固定；升级 nixpkgs 时不要随意修改 stateVersion。
   system.stateVersion = lib.mkDefault "26.05";
 
   # ── systemd-boot 配置（用 mkDefault 允许 host 层覆盖，如切换 GRUB） ──

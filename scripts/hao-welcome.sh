@@ -46,6 +46,6 @@ notify-send \
   --app-name "HAO AI" \
   --icon utilities-terminal \
   "Your native AI workspace is ready" \
-  "Press Super + Ctrl + Shift + A to choose Codex, Claude Code or OpenCode." || true
+  "Press Super + Ctrl + Shift + A to open your default Agent. Run ai-pick to choose another." || true
 
 touch "$MARKER"

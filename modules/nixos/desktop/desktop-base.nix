@@ -16,6 +16,8 @@
 
   # ── 显示服务器 ──────────────────────────────────────────────────────
   programs.niri.enable = true; # Niri 窗口管理器
+  # Niri 按需自动启动 Xwayland Satellite，供 Steam 等 X11 程序使用。
+  environment.systemPackages = [ pkgs.xwayland-satellite ];
 
   # Wayland 必需
   programs.dconf.enable = true;

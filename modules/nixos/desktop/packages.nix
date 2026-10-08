@@ -31,10 +31,9 @@
     pavucontrol # 音量控制
 
     # ── 文件管理 ─────────────────────────────────────────────────
-    # Thunar 系列在 xfce.* 命名空间，顶层别名不可靠
-    xfce.thunar # 文件管理器
-    xfce.thunar-archive-plugin
-    xfce.thunar-volman
+    thunar # 文件管理器；xfce.thunar 等旧别名已弃用
+    thunar-archive-plugin
+    thunar-volman
     gvfs # 挂载/回收站
     tumbler # 缩略图
 

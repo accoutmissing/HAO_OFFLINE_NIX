@@ -27,8 +27,8 @@
 
     fontconfig = {
       defaultFonts = {
-        serif = [ "Source Han Serif SC" "Source Serif" ];
-        sansSerif = [ "Source Han Sans SC" "Source Sans" ];
+        serif = [ "Source Han Serif SC" "Source Serif 4" ];
+        sansSerif = [ "Source Han Sans SC" "Source Sans 3" ];
         monospace = [ "Maple Mono NF CN" "JetBrainsMono Nerd Font" ];
         emoji = [ "Noto Color Emoji" ];
       };

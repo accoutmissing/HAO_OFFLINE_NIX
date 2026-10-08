@@ -2,6 +2,8 @@
 # Requires elevation (run once, 2026-10-07 WSL migration).
 # ASCII-only on purpose: Windows PowerShell 5.1 mis-parses UTF-8 without BOM.
 
+$ErrorActionPreference = "Stop"
+
 $log = "C:\Users\admin\wsl-task-update.log"
 "=== $(Get-Date) ===" | Out-File $log
 
@@ -32,4 +34,5 @@ try {
     "AllowBattery: $($t.Settings.AllowStartIfOnBatteries) DontStopBattery: $($t.Settings.DontStopIfGoingOnBatteries) StopOnIdle: $($t.Settings.StopOnIdleEnd) TimeLimit: $($t.Settings.ExecutionTimeLimit)" | Out-File $log -Append
 } catch {
     "FAILED: $($_.Exception.Message)" | Out-File $log -Append
+    exit 1
 }
