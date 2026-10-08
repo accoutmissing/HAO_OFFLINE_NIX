@@ -3,9 +3,8 @@
 #   https://crescentro.se/posts/windows-vm-nixos/
 #   https://wiki.nixos.org/wiki/QEMU
 #
-# 坑位说明：nix-collect-garbage 会清掉 OVMF 固件的 store 路径，
-# 导致已有 VM 起不来（UEFI firmware not found）。
-# 这里用 tmpfiles 把固件固定链到 /var/lib/ovmf，VM 配置里统一指向该路径。
+# 固件由当前系统闭包引用；tmpfiles 提供稳定入口，软链本身不是 GC root。
+# VARS 是只读模板，每台 VM 必须使用独立的可写 NVRAM 文件。
 
 { pkgs, ... }:
 
@@ -19,11 +18,14 @@
     };
   };
 
-  # OVMF 固件持久化，避免 GC 后 VM 报 UEFI firmware not found
-  # VM 里固件路径填 /var/lib/ovmf/OVMF_CODE.fd / OVMF_VARS.fd
+  # firmware / variables 已是完整文件路径，不能再追加文件名。
+  # libvirt 的 loader 指向 CODE，nvram template 指向 VARS；
+  # 实际 nvram 由 libvirt 为每台 VM 单独创建，不直接写这些模板。
+  # 使用微软密钥模板的 VM 还需要启用 Secure Boot 和 TPM 设备。
   systemd.tmpfiles.rules = [
-    "L+ /var/lib/ovmf/OVMF_CODE.fd - - - - ${pkgs.OVMFFull.firmware}/OVMF_CODE.fd"
-    "L+ /var/lib/ovmf/OVMF_VARS.fd - - - - ${pkgs.OVMFFull.firmware}/OVMF_VARS.fd"
+    "L+ /var/lib/ovmf/OVMF_CODE.fd - - - - ${pkgs.OVMFFull.firmware}"
+    "L+ /var/lib/ovmf/OVMF_VARS.fd - - - - ${pkgs.OVMFFull.variables}"
+    "L+ /var/lib/ovmf/OVMF_VARS.ms.fd - - - - ${pkgs.OVMFFull.variablesMs}"
   ];
 
   # spice USB 重定向：virt-manager 里把宿主 USB 设备转给 Windows VM

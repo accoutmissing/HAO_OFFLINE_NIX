@@ -8,6 +8,9 @@ in
   options.modules.desktop = {
     gaming = {
       enable = mkEnableOption "游戏套件（Steam, Lutris, 游戏优化）";
+      ntsync.enable = (mkEnableOption "Wine/Proton 的 NTSYNC 内核同步支持") // {
+        default = lib.versionAtLeast config.boot.kernelPackages.kernel.version "6.14";
+      };
     };
   };
 
@@ -27,6 +30,12 @@ in
     # ── GameMode（系统级游戏性能优化） ─────────────────────────────────
     programs.gamemode.enable = true;
 
+    # Wine 11 / GE-Proton 自动选择可用的 NTSYNC；保留开关便于按游戏对比。
+    boot.kernelModules = lib.optionals cfg.ntsync.enable [ "ntsync" ];
+    services.udev.extraRules = lib.mkIf cfg.ntsync.enable ''
+      KERNEL=="ntsync", SUBSYSTEM=="misc", GROUP="users", MODE="0660"
+    '';
+
     # ── 系统级游戏包 ────────────────────────────────────────────────────
     environment.systemPackages = with pkgs; [
       lutris
@@ -34,7 +43,6 @@ in
       protonup-qt # Proton 版本管理（GUI）
       vkbasalt # Vulkan 后处理（锐化/增强）
       mangohud
-      gamescope
       wineWow64Packages.stable # 日用 Wine，支持 32/64 位 Windows 程序
       winetricks
       protonplus

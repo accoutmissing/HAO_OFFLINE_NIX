@@ -166,6 +166,11 @@
       # ── CI 检查 ───────────────────────────────────────────────────────
       checks.${system} = {
         formatting = treefmtEval.config.build.check self;
+        desktop-support = import ./tests/desktop-support.nix {
+          inherit lib pkgs;
+          laptopConfig = self.nixosConfigurations.HAO_OFFLINE.config;
+          desktopConfig = self.nixosConfigurations.HAO_DESKTOP.config;
+        };
         installer-failure-handling = pkgs.runCommand "installer-failure-handling"
           { nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep ]; }
           ''

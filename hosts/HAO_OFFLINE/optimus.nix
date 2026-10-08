@@ -2,7 +2,7 @@
 # 方案：PRIME Offload — 默认用 Intel 核显省电，游戏/渲染时按需调用独显
 # 用法：prime-run <程序>  或  nvidia-offload <程序>
 
-{ pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   # ── 系统包 ──────────────────────────────────────────────────────────
@@ -42,6 +42,14 @@
   hardware.graphics = {
     enable = true;
     enable32Bit = true; # Steam 需要 32 位 GL
+  };
+
+  # 仅让 Gamescope 及其子进程使用独显，日常 Niri 桌面仍用核显。
+  # 不固定 NVIDIA-G0：X11 provider 名称可能随机器和会话变化。
+  programs.gamescope.env = lib.mkIf config.modules.desktop.gaming.enable {
+    __NV_PRIME_RENDER_OFFLOAD = "1";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    __VK_LAYER_NV_optimus = "NVIDIA_only";
   };
 
   # 驱动列表（nvidia 驱动同时处理 NVIDIA 和 Intel）

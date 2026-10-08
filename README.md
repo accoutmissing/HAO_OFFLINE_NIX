@@ -81,6 +81,17 @@ sudo nixos-rebuild switch --rollback
 sudo nix-collect-garbage --delete-older-than 7d
 ```
 
+## 🎮 游戏与 Windows VM
+
+- Steam 已声明安装 GE-Proton；按游戏在「属性 → 兼容性」中选择。日用 Windows 程序可使用 Wine 11。
+- 笔记本的 Gamescope 启动器会为游戏启用 NVIDIA PRIME offload；普通 Steam 游戏可设置启动选项 `nvidia-offload %command%`。桌面仍默认使用核显。
+- Linux 6.14 及以上默认加载 NTSYNC，并允许普通用户访问 `/dev/ntsync`。可设置 `modules.desktop.gaming.ntsync.enable = false;` 重建并重启，比较具体游戏的帧时间；设备存在不代表每个 Wine/Proton 版本都会使用它。
+- virt-manager 默认连接系统 libvirt；宿主机关机时向 VM 发送关机请求，下次开机不恢复上次会话。单独标记为 autostart 的 VM 仍会自动启动。
+- 已定义的 libvirt `default` NAT 网络会自动启动；没有定义时服务会跳过，可在 virt-manager 中创建所需网络。
+- 笔记本提供 `/var/lib/ovmf/OVMF_CODE.fd`、`OVMF_VARS.fd` 和 `OVMF_VARS.ms.fd`。CODE 是只读固件，VARS 是只读模板，libvirt 应为每台 VM 创建独立的可写 NVRAM；微软密钥模板还需配合 VM 的 Secure Boot 和 TPM 设置。
+
+实现依据：[libvirt NVRAM 模板](https://libvirt.org/formatdomain.html#bios-bootloader)、[GE-Proton NTSYNC 要求](https://github.com/GloriousEggroll/proton-ge-custom#enabling-ntsync)。
+
 ## 🤖 原生 AI Agent
 
 桌面配置内置了类似 Omarchy 的原生 AI 入口，但适配为 Niri + Noctalia：
