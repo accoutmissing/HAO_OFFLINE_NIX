@@ -1,0 +1,89 @@
+name: verify-installer-artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Build run containing hao-installer-iso
+        required: true
+        type: string
+      expected_sha:
+        description: Exact configuration commit embedded in the ISO
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.expected_sha }}
+
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
+        with:
+          github_access_token: ${{ github.token }}
+
+      - name: Verify artifact origin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(gh api "repos/$GH_REPO/actions/runs/$SOURCE_RUN_ID" --jq .head_sha)" = "$EXPECTED_SHA"
+          test "$(gh api "repos/$GH_REPO/actions/runs/$SOURCE_RUN_ID" --jq .conclusion)" = success
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: hao-installer-iso
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+          path: dist
+
+      - name: Inspect checksum, UEFI and embedded configuration
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          cat > /tmp/verify-iso.sh <<'SCRIPT'
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE/dist"
+          shopt -s nullglob
+          images=(*.iso)
+          test "${#images[@]}" -eq 1
+          sha256sum -c SHA256SUMS
+          mkdir -p "$GITHUB_WORKSPACE/verification"
+          xorriso -indev "${images[0]}" -pvd_info -report_el_torito plain > "$GITHUB_WORKSPACE/verification/boot-info.txt" 2>&1
+          grep -q HAO_INSTALLER "$GITHUB_WORKSPACE/verification/boot-info.txt"
+          grep -q UEFI "$GITHUB_WORKSPACE/verification/boot-info.txt"
+          xorriso -osirrox on -indev "${images[0]}" -extract /nix-store.squashfs /tmp/iso-store.squashfs
+          unsquashfs -ll /tmp/iso-store.squashfs > /tmp/store-manifest.txt
+          source_base=$(grep -F '/etc/hao-installer/config -> /nix/store/' /tmp/store-manifest.txt | awk '{print $NF}' | xargs basename)
+          test -n "$source_base"
+          source_path=$(grep -F "/$source_base/flake.nix" /tmp/store-manifest.txt | awk '{print $NF}' | sed 's@^squashfs-root/@@; s@/flake.nix$@@')
+          test -n "$source_path"
+          unsquashfs -no-progress -d /tmp/embedded-source /tmp/iso-store.squashfs "$source_path"
+          cd "$GITHUB_WORKSPACE"
+          count=0
+          while IFS= read -r -d '' file; do
+            cmp "$file" "/tmp/embedded-source/$source_path/$file"
+            printf '%s: MATCH\n' "$file" >> verification/embedded-files.txt
+            count=$((count + 1))
+          done < <(git ls-files -z)
+          cp dist/SHA256SUMS verification/SHA256SUMS
+          printf 'Commit: %s\nBuild run: %s\nEmbedded tracked files matched: %s\nUEFI: PASS\nVolume: HAO_INSTALLER\nChecksum: PASS\n' "$EXPECTED_SHA" "$SOURCE_RUN_ID" "$count" > verification/summary.txt
+          cat verification/summary.txt verification/SHA256SUMS
+          SCRIPT
+          nix shell github:NixOS/nixpkgs/151fa4e8ddfdd8dd25d945ad94ed54a13de9f6e4#xorriso github:NixOS/nixpkgs/151fa4e8ddfdd8dd25d945ad94ed54a13de9f6e4#squashfsTools --command bash /tmp/verify-iso.sh
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hao-installer-verification
+          path: verification/*
+          if-no-files-found: error
