@@ -1,6 +1,8 @@
 name: verify-installer-artifact
 
 on:
+  push:
+    branches: [audit-verify-iso-20261008]
   workflow_dispatch:
     inputs:
       source_run_id:
@@ -22,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          ref: ${{ inputs.expected_sha }}
+          ref: ${{ inputs.expected_sha || '332993fa78c694cbe0b8fa712d76b46560f394a3' }}
 
       - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
         with:
@@ -32,8 +34,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id || '37744731748' }}
+          EXPECTED_SHA: ${{ inputs.expected_sha || '332993fa78c694cbe0b8fa712d76b46560f394a3' }}
         run: |
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
           test "$(gh api "repos/$GH_REPO/actions/runs/$SOURCE_RUN_ID" --jq .head_sha)" = "$EXPECTED_SHA"
@@ -42,14 +44,14 @@ jobs:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: hao-installer-iso
-          run-id: ${{ inputs.source_run_id }}
+          run-id: ${{ inputs.source_run_id || '37744731748' }}
           github-token: ${{ github.token }}
           path: dist
 
       - name: Inspect checksum, UEFI and embedded configuration
         env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          EXPECTED_SHA: ${{ inputs.expected_sha || '332993fa78c694cbe0b8fa712d76b46560f394a3' }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id || '37744731748' }}
         run: |
           cat > /tmp/verify-iso.sh <<'SCRIPT'
           set -euo pipefail
