@@ -26,11 +26,24 @@ if [[ -n ${HAO_INSTALLER_TEST_CASE:-} ]]; then
     false
     printf 'A disk write would have happened\n' >"$STATE_DIR/unsafe-action"
   }
+  install_system() {
+    if [[ ! -f $STATE_DIR/first-attempt ]]; then
+      touch "$STATE_DIR/first-attempt"
+      return 42
+    fi
+    printf 'Phase output\n'
+  }
+  slow_phase() {
+    printf '%s\n' "$BASHPID" >"$STATE_DIR/phase-pid"
+    bash -c 'sleep 3; printf "A write after cancellation\n" > "$1/unsafe-action"' _ "$STATE_DIR"
+  }
 
   case "$HAO_INSTALLER_TEST_CASE" in
   success) run_phase 1 1 "Test phase" successful_phase ;;
   failure) run_phase 1 1 "Test phase" failed_phase ;;
   safety-check) run_phase 1 1 "Test phase" failed_safety_check ;;
+  retry-safe) run_phase 1 1 "Test phase" install_system ;;
+  interruption) run_phase 1 1 "Test phase" slow_phase ;;
   *) exit 2 ;;
   esac
   exit 0
@@ -55,7 +68,13 @@ run_case() {
   if [[ $expected_status -eq 0 ]]; then
     grep -qx complete "$directory/phases"
     grep -qx 'Phase output' "$directory/install.log"
-    [[ ! -e $directory/recovery-pids ]]
+    if [[ $name == retry-safe ]]; then
+      [[ $(cat "$directory/recovery-pids") == "$(cat "$directory/foreground-pid")" ]]
+      [[ $(grep -c '^running$' "$directory/phases") == 2 ]]
+      grep -qx failed "$directory/phases"
+    else
+      [[ ! -e $directory/recovery-pids ]]
+    fi
   else
     grep -qx failed "$directory/phases"
     [[ $(cat "$directory/recovery-pids") == "$(cat "$directory/foreground-pid")" ]]
@@ -68,3 +87,20 @@ run_case() {
 run_case success 0
 run_case failure 42
 run_case safety-check 1
+run_case retry-safe 0
+
+directory="$test_root/interruption"
+mkdir -p "$directory"
+HAO_INSTALLER_TEST_CASE=interruption bash "$0" "$installer_script" "$directory" &
+runner_pid=$!
+for ((attempt = 0; attempt < 100; attempt++)); do
+  [[ -f $directory/phase-pid ]] && break
+  sleep 0.05
+done
+[[ -f $directory/phase-pid ]]
+kill -TERM "$runner_pid"
+if wait "$runner_pid"; then exit 1; else [[ $? == 143 ]]; fi
+sleep 3.2
+[[ ! -e $directory/unsafe-action ]]
+if kill -0 "$(cat "$directory/phase-pid")" 2>/dev/null; then exit 1; fi
+printf 'PASS: interruption stops the phase and its descendants\n'

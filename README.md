@@ -8,7 +8,7 @@
 |------|------|
 | 🖥️ 主机 | HAO_OFFLINE（笔记本 i7-8750H + GTX 1060）/ HAO_DESKTOP（台式机 i5-13600KF + RTX 4070S）/ HAO_SERVER（服务器，独立分支） |
 | 🪟 桌面 | Niri（滚动平铺 Wayland）+ Noctalia 壳层（bar/dock/启动器/锁屏）+ ReGreet 图形登录 |
-| 💿 安装 | HAO 全屏安装向导 + Disko 自动分区 + 首次登录欢迎提示 |
+| 💿 安装 | 中文全屏向导 + 按机型离线镜像 + 自动分区 + 失败重试 |
 | 🔤 中文输入 | Fcitx5 + Rime |
 | 🎨 设计 | GIMP / Inkscape / Krita / Blender 全套 |
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
@@ -40,14 +40,15 @@
 
 - 🐣 **第一次接触 Linux？** → [📖 安装入门指南（写给纯小白）](./INSTALL_GUIDE.md)
 - 💿 **想直接制作 HAO 安装盘？** → [HAO Installer 构建与安全说明](./installer/README.md)
-- ⚙️ **想按已有教程装系统？** → 参考 [README 旧版安装说明](https://github.com/accoutmissing/HAO_OFFLINE_NIX/blob/main/README.md)（已迁移至 INSTALL_GUIDE）
 - 📦 **想用发布版本？** → [Releases](https://github.com/accoutmissing/HAO_OFFLINE_NIX/releases)
 
-### HAO 图形化安装向导
+### HAO 安装向导
 
-Release 中的 `hao-installer-*.iso` 启动后会自动进入全屏安装界面，无需先打开
-终端。依次完成网络、机型、磁盘和登录密码设置后，安装器会自动执行 Disko 与
-`nixos-install`，并在结束时显示重启页面。
+新版镜像启动后进入中文全屏界面，方向键选择、回车继续。确认机型、硬盘和密码后，向导会先准备完整系统，再清盘并安装；下载或安装失败可重试当前步骤。
+
+国内安装建议使用匹配机型的离线版，安装现场无需联网下载系统；联网版会自动选择可达的国内缓存，并保留官方后备源。图形界面启动失败时自动退回英文文字模式。
+
+本分支包含这些改进；v1.2.7 已发布镜像仍是此前的英文联网版，新功能需使用更新后的构建产物。镜像选择、分卷合并和 U 盘写入见[五步安装说明](./INSTALL_GUIDE.md#推荐五步完成安装)。
 
 当前版本只支持 **UEFI 整盘安装**，所选磁盘会被完全清空；双系统继续使用
 [安装指南](./INSTALL_GUIDE.md) 中的高级手动流程。需要从源码构建 ISO 时运行：

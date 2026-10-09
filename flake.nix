@@ -90,13 +90,16 @@
       treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
 
       # HAO 品牌安装介质（全屏 TUI + Disko + Flake 安装）
-      haoInstaller = lib.nixosSystem {
+      mkInstaller = offlineHost: lib.nixosSystem {
         inherit system;
         specialArgs = inputs // {
-          inherit inputs self system;
+          inherit inputs self system offlineHost;
         };
         modules = [ ./installer/iso.nix ];
       };
+      haoInstaller = mkInstaller null;
+      haoDesktopInstaller = mkInstaller "HAO_DESKTOP";
+      haoLaptopInstaller = mkInstaller "HAO_OFFLINE";
     in
     {
       # ── 系统配置 ──────────────────────────────────────────────────────
@@ -106,6 +109,8 @@
 
         # 可启动安装 ISO；与桌面主机分离，不继承 base/desktop 模块。
         HAO_INSTALLER = haoInstaller;
+        HAO_INSTALLER_OFFLINE_DESKTOP = haoDesktopInstaller;
+        HAO_INSTALLER_OFFLINE_LAPTOP = haoLaptopInstaller;
 
         # Windows WSL 测试环境（无引导/无桌面，精简配置）
         # 仍然接 Home Manager：与桌面主机共用 home/linux（用户名、家目录都一致），
@@ -142,6 +147,8 @@
       packages.${system} = {
         disko = disko.packages.${system}.disko;
         hao-installer-iso = haoInstaller.config.system.build.isoImage;
+        hao-installer-offline-desktop-iso = haoDesktopInstaller.config.system.build.isoImage;
+        hao-installer-offline-laptop-iso = haoLaptopInstaller.config.system.build.isoImage;
       };
 
       # ── 格式化 ────────────────────────────────────────────────────────
@@ -177,6 +184,17 @@
             bash ${./tests/installer-run-phase.sh} ${./installer/scripts/hao-installer.sh}
             touch "$out"
           '';
+        installer-downloads = pkgs.runCommand "installer-downloads"
+          { nativeBuildInputs = [ pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.gawk ]; }
+          ''
+            bash ${./tests/installer-downloads.sh} ${./installer/scripts/hao-installer.sh}
+            touch "$out"
+          '';
+        installer-vm = import ./tests/installer-vm.nix {
+          inherit lib pkgs;
+          disko = inputs.disko.packages.${system}.disko;
+          installerConfig = haoInstaller.config;
+        };
       };
     };
 

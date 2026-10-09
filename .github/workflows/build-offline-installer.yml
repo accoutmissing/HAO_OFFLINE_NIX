@@ -1,0 +1,68 @@
+name: build-offline-installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Offline installer hardware profile
+        type: choice
+        default: both
+        options: [both, desktop, laptop]
+
+permissions:
+  contents: read
+
+jobs:
+  iso:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: ${{ fromJSON(inputs.profile == 'both' && '["desktop","laptop"]' || format('["{0}"]', inputs.profile)) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build offline ISO
+        env:
+          PROFILE: ${{ matrix.profile }}
+        run: nix build --accept-flake-config --no-write-lock-file ".#hao-installer-offline-$PROFILE-iso"
+
+      - name: Prepare downloadable files
+        env:
+          PROFILE: ${{ matrix.profile }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir dist
+          cp result/iso/*.iso dist/
+          cp installer/windows/Join-Installer.ps1 dist/
+          cp installer/windows/Join-Installer.cmd dist/
+          cd dist
+          files=(*.iso)
+          test "${#files[@]}" -eq 1
+          iso="${files[0]}"
+          sha256sum "./$iso" > "SHA256SUMS-offline-$PROFILE"
+          # GitHub release assets must be below 2 GiB. Keep the checksum of
+          # the complete ISO, plus checksums for its ordered download parts.
+          if (( $(stat -c %s "$iso") >= 2147483648 )); then
+            split -b 1900M -d -a 2 "$iso" "$iso.part"
+            sha256sum ./"$iso".part* >> "SHA256SUMS-offline-$PROFILE"
+            rm -- "$iso"
+          fi
+          sha256sum --ignore-missing -c "SHA256SUMS-offline-$PROFILE"
+          sha256sum ./Join-Installer.ps1 >> "SHA256SUMS-offline-$PROFILE"
+          sha256sum ./Join-Installer.cmd >> "SHA256SUMS-offline-$PROFILE"
+          printf 'Commit: %s\nProfile: %s\n' "$GITHUB_SHA" "$PROFILE" > BUILD-INFO.txt
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hao-installer-offline-${{ matrix.profile }}
+          path: dist/*
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error

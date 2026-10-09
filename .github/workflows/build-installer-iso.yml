@@ -22,15 +22,19 @@ jobs:
       - name: Prepare release files
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p dist
           cp result/iso/*.iso dist/
           cd dist
           sha256sum ./*.iso > SHA256SUMS
+          sha256sum -c SHA256SUMS
+          printf 'Commit: %s\nProfile: online\n' "$GITHUB_SHA" > BUILD-INFO.txt
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: hao-installer-iso
           path: dist/*
+          compression-level: 0
           if-no-files-found: error
 
   release:
