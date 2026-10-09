@@ -42,7 +42,7 @@ TARGET_DISK_SERIAL=""
 TARGET_DISK_WWN=""
 PREBUILT_SYSTEM=""
 SELECTED_CACHES=""
-NIX_OPTIONS=(--option connect-timeout 5 --option download-attempts 2)
+NIX_OPTIONS=(--option connect-timeout 5 --option download-attempts 2 --option accept-flake-config false)
 
 tips=(
   "The installer log is saved to /var/log/hao-install.log"
@@ -441,7 +441,9 @@ probe_caches() {
     priority=$((10 + index * 10))
     SELECTED_CACHES+="${SELECTED_CACHES:+ }${url}?priority=${priority}"
   done
-  NIX_OPTIONS=(--option connect-timeout 5 --option download-attempts 2)
+  # The ISO already configures the signing keys. Flake nixConfig is applied
+  # after CLI options and could add back caches that failed this probe.
+  NIX_OPTIONS=(--option connect-timeout 5 --option download-attempts 2 --option accept-flake-config false)
   if [[ -n $SELECTED_CACHES ]]; then
     NIX_OPTIONS+=(--option substituters "$SELECTED_CACHES" --option extra-substituters "")
     return 0
@@ -760,7 +762,7 @@ build_target_before_erase() {
     nix-store --check-validity "${store_paths[@]}"
     ln -sfn "$PREBUILT_SYSTEM" "$STATE_DIR/target-system"
   else
-    nix build --out-link "$STATE_DIR/target-system" --accept-flake-config --no-write-lock-file \
+    nix build --out-link "$STATE_DIR/target-system" --no-write-lock-file \
       "${NIX_OPTIONS[@]}" \
       "$CONFIG_SOURCE#nixosConfigurations.${HOST_CONFIG}.config.system.build.toplevel"
   fi

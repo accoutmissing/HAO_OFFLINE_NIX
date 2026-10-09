@@ -77,6 +77,43 @@ let
       sleep infinity
     '';
   };
+  networkFixture = pkgs.writeTextDir "flake.nix" ''
+    {
+      nixConfig.extra-substituters = [ "http://127.0.0.1:16982" ];
+      outputs = _: {
+        nixosConfigurations.HAO_DESKTOP.config.system.build.toplevel = builtins.derivation {
+          name = "hao-online-install-fixture";
+          system = "${pkgs.stdenv.hostPlatform.system}";
+          builder = "''${${pkgs.bash}}/bin/bash";
+          args = [ "-c" "''${${pkgs.coreutils}}/bin/ln -s ''${${target.config.system.build.toplevel}} $out" ];
+        };
+      };
+    }
+  '';
+  checkCacheSelection = pkgs.writeShellScript "check-installer-cache-selection" ''
+    set -Eeuo pipefail
+    export HAO_INSTALLER_STATE_DIR=/run/hao-cache-test HAO_INSTALLER_TTY=/dev/null
+    source ${../installer/scripts/hao-installer.sh}
+    trap - ERR
+    mkdir -p "$STATE_DIR"
+    CONFIG_SOURCE=/etc/hao-installer/network-config
+    HOST_CONFIG=HAO_DESKTOP
+    TARGET_DISK_SIZE=68719476736
+    NIX_OPTIONS+=(--option substituters "" --option extra-substituters "")
+    # Model a rejected cache being added back by flake nixConfig. The actual
+    # Nix command must not contact it, even when the ISO trusts flake configs.
+    printf 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n' \
+      | nc -N -l 127.0.0.1 16982 > "$STATE_DIR/unexpected-cache-request" &
+    cache_pid=$!
+    trap 'kill "$cache_pid" 2>/dev/null || true; wait "$cache_pid" 2>/dev/null || true; cleanup' EXIT
+    for _ in $(seq 1 100); do
+      ss -ltnH 'sport = :16982' | grep -q . && break
+      sleep 0.05
+    done
+    ss -ltnH 'sport = :16982' | grep -q .
+    build_target_before_erase
+    test ! -s "$STATE_DIR/unexpected-cache-request"
+  '';
   installFixture = pkgs.writeShellScript "install-fixture" ''
     set -Eeuo pipefail
     export HAO_INSTALLER_STATE_DIR=/run/hao-installer-test
@@ -145,6 +182,8 @@ pkgs.testers.runNixOSTest {
       pkgs.nixos-install
       pkgs.nixos-enter
       pkgs.nix
+      pkgs.netcat-openbsd
+      pkgs.iproute2
       pkgs.gawk
       disko
     ];
@@ -152,11 +191,13 @@ pkgs.testers.runNixOSTest {
       "systemd/system/getty@tty1.service" = installerConfig.environment.etc."systemd/system/getty@tty1.service";
       "hao-installer/kitty.conf" = installerConfig.environment.etc."hao-installer/kitty.conf";
       "hao-installer/config".source = fixtureSource;
+      "hao-installer/network-config".source = networkFixture;
       "hao-installer/partition-disk" = installerConfig.environment.etc."hao-installer/partition-disk";
       "hao-installer/offline-host".text = "HAO_DESKTOP\n";
       "hao-installer/offline-system".text = "${target.config.system.build.toplevel}\n";
     };
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.accept-flake-config = true;
     systemd.services."getty@tty1".enable = false;
     systemd.services.hao-installer = {
       wantedBy = [ "multi-user.target" ];
@@ -184,6 +225,7 @@ pkgs.testers.runNixOSTest {
     machine.wait_until_succeeds("pgrep -f '[k]itty.*--config'", timeout=timedelta(seconds=45))
     machine.wait_until_succeeds("pgrep -f '[g]um confirm'", timeout=timedelta(seconds=45))
     machine.screenshot("installer-zh")
+    machine.succeed("${checkCacheSelection}", timeout=timedelta(seconds=60))
     machine.succeed("${installFixture}", timeout=timedelta(seconds=600))
     machine.succeed("test -e /mnt/boot/EFI/BOOT/BOOTX64.EFI")
     machine.succeed("test -x /mnt/nix/var/nix/profiles/system/bin/switch-to-configuration")

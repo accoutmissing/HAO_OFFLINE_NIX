@@ -52,4 +52,6 @@ tty1 由安装器独占；遇到问题可使用 `Ctrl+Alt+F2` 切换到维修终
 
 下载/构建和系统安装阶段可重试，也可回到联网菜单后继续；分区阶段不会自动重复执行。临时代理只存在于 live 环境，不自动带入目标系统。
 
+联网构建使用向导探测后选出的缓存；签名密钥由 ISO 预置。安装阶段忽略 Flake 的缓存追加项，避免失效的下载源被重新加入。
+
 实现依据：[Nix fetchTree 对已有 narHash 源码的复用](https://nix.dev/manual/nix/2.33/language/builtins.html#builtins-fetchTree)、[USTC 动态缓存及回退说明](https://mirrors.ustc.edu.cn/help/nix-channels.html)。CI 包含缓存/代理回归检查，以及中文界面与最小测试系统的虚拟机离线安装检查；这些检查不替代两台真实硬件的启动和安装验收。
