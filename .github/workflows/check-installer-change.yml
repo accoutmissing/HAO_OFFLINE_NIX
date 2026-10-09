@@ -1,0 +1,50 @@
+name: check-installer-change
+
+on:
+  push:
+    branches: [audit-verify-iso-20261008]
+    paths: [.github/workflows/check-installer-change.yml]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact candidate commit to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.source_sha || 'audit-installer-cache-fix-20261009' }}
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
+        with:
+          github_access_token: ${{ github.token }}
+      - name: Format candidate and retain any required patch
+        run: |
+          nix fmt --accept-flake-config
+          git diff > /tmp/formatting.patch
+          git rev-parse HEAD > /tmp/candidate-sha.txt
+      - name: Test actual cache behavior, recovery and offline installation
+        run: |
+          nix build --accept-flake-config --no-write-lock-file --no-link -L \
+            .#checks.x86_64-linux.installer-downloads \
+            .#checks.x86_64-linux.installer-failure-handling \
+            .#checks.x86_64-linux.installer-vm
+      - name: Check all flake outputs
+        run: nix flake check --accept-flake-config --no-write-lock-file -L
+      - name: Require unchanged formatting
+        run: test ! -s /tmp/formatting.patch
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: installer-candidate-check
+          path: |
+            /tmp/formatting.patch
+            /tmp/candidate-sha.txt
+          if-no-files-found: error
