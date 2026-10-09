@@ -20,6 +20,8 @@
 
 本分支新增了中文界面和离线镜像构建。已发布的 v1.2.7 是英文联网版，仍按其菜单配置网络；新功能需使用更新后的构建产物。若显卡无法启动中文窗口，新版会自动退回英文文字界面，步骤相同。
 
+**下载新版候选镜像**：登录 GitHub，打开[离线版构建列表](https://github.com/accoutmissing/HAO_OFFLINE_NIX/actions/workflows/build-offline-installer.yml)或[联网版构建列表](https://github.com/accoutmissing/HAO_OFFLINE_NIX/actions/workflows/build-installer-iso.yml)，选择绿色成功的记录，在页面底部的 **Artifacts** 下载对应机型的压缩包并解压。`desktop` 是台式机，`laptop` 是笔记本。离线候选文件保留 14 天；正式发布后优先使用 Release 附件。
+
 ### 离线镜像是多个分卷时
 
 [GitHub 单个 Release 附件须小于 2 GiB](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas)，因此大镜像会分为 `.iso.part00`、`.iso.part01` 等文件。
