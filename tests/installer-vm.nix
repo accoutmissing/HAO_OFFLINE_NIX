@@ -80,12 +80,16 @@ let
   networkFixture = pkgs.writeTextDir "flake.nix" ''
     {
       nixConfig.extra-substituters = [ "http://127.0.0.1:16982" ];
-      outputs = _: {
+      outputs = _:
+      let
+        # Keep store dependencies without reading absolute paths during pure evaluation.
+        storePath = path: builtins.appendContext path { "''${path}" = { path = true; }; };
+      in {
         nixosConfigurations.HAO_DESKTOP.config.system.build.toplevel = builtins.derivation {
           name = "hao-online-install-fixture";
           system = "${pkgs.stdenv.hostPlatform.system}";
-          builder = "''${${pkgs.bash}}/bin/bash";
-          args = [ "-c" "''${${pkgs.coreutils}}/bin/ln -s ''${${target.config.system.build.toplevel}} $out" ];
+          builder = storePath "${pkgs.bash}" + "/bin/bash";
+          args = [ "-c" "''${storePath "${pkgs.coreutils}"}/bin/ln -s ''${storePath "${target.config.system.build.toplevel}"} $out" ];
         };
       };
     }
@@ -100,6 +104,22 @@ let
     HOST_CONFIG=HAO_DESKTOP
     TARGET_DISK_SIZE=68719476736
     NIX_OPTIONS+=(--option substituters "" --option extra-substituters "")
+    # The control command must contact the fixture cache, otherwise the
+    # installer assertion below could pass without exercising this behavior.
+    printf 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n' \
+      | nc -N -l 127.0.0.1 16982 > "$STATE_DIR/control-cache-request" &
+    cache_pid=$!
+    trap 'kill "$cache_pid" 2>/dev/null || true; wait "$cache_pid" 2>/dev/null || true; cleanup' EXIT
+    for _ in $(seq 1 100); do
+      ss -ltnH 'sport = :16982' | grep -q . && break
+      sleep 0.05
+    done
+    ss -ltnH 'sport = :16982' | grep -q .
+    nix build --dry-run --accept-flake-config --no-write-lock-file \
+      --option substituters "" --option extra-substituters "" \
+      "$CONFIG_SOURCE#nixosConfigurations.$HOST_CONFIG.config.system.build.toplevel"
+    wait "$cache_pid"
+    grep -q 'GET /nix-cache-info' "$STATE_DIR/control-cache-request"
     # Model a rejected cache being added back by flake nixConfig. The actual
     # Nix command must not contact it, even when the ISO trusts flake configs.
     printf 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n' \
