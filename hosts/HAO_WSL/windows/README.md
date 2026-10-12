@@ -76,5 +76,5 @@ while ($true) { wsl.exe -d HAO_WSL -u root -- /run/current-system/sw/bin/sleep 6
 ## 6. 不在本仓库的东西（机器侧，需单独备份）
 
 - `/etc/hindsight.env`：Hindsight 的 LLM key、tenant key、控制面 key（0600，不入 Git）
-- `/var/lib/penpot/certs/{penpot.crt,penpot.key}`：Penpot 的 TLS 证书与私钥
+- `/var/lib/penpot/certs/{penpot.crt,penpot.key}`：Penpot 的 TLS 证书与私钥——优先从旧环境复制；缺失时 `penpot-certs.service` 会以探测到的局域网 IP 自动生成自签名证书（浏览器提示不受信任属预期）
 - 数据卷 `penpot_penpot_assets`、`penpot_penpot_postgres_v15` 与 PostgreSQL 18 的 `hindsight` 库

@@ -12,8 +12,10 @@
 #     改为 systemd 单元顺序 + 容器重启策略，Postgres 就绪前后端会自行重试。
 #   * PENPOT_SECRET_KEY 保持旧环境的 compose 默认值，避免既有登录会话失效。
 #
-# 证书不在 Git 里：/var/lib/penpot/certs/{penpot.crt,penpot.key} 需从旧环境复制
-# （另外同目录的 penpot-local-ca.crt 是本地 CA，仅用于浏览器信任，traefik 不需要）。
+# 证书不在 Git 里：/var/lib/penpot/certs/{penpot.crt,penpot.key} 优先从旧环境复制；
+# 缺失时由 penpot-certs.service 自动生成自签名证书（SAN 含探测到的局域网 IP）——
+# 浏览器会提示不受信任，与旧环境本地 CA（penpot-local-ca.crt，仅用于浏览器信任）
+# 方案同等效力；将生成的证书或本地 CA 导入信任存储即可消除提示。
 
 { lib, pkgs, ... }:
 
@@ -56,6 +58,34 @@ let
     fi
     echo "PENPOT_PUBLIC_URI=https://''${ip}:9001" > ${publicUriEnvFile}
     echo "penpot-detect-lan-ip: ''${ip}"
+  '';
+
+  # 确保 traefik 证书存在：已有证书（旧环境复制）则直接使用；docker 在 -v 源
+  # 路径缺失时会创建“目录占位”，先清理；否则以探测到的局域网 IP 为 SAN 自签。
+  ensurePenpotCerts = pkgs.writeShellScript "ensure-penpot-certs" ''
+    crt=${certsDir}/penpot.crt
+    key=${certsDir}/penpot.key
+    for f in "$crt" "$key"; do
+      if [ -d "$f" ]; then
+        echo "penpot-certs: removing docker-created directory placeholder ''${f}"
+        rm -rf "$f"
+      fi
+    done
+    if [ -f "$crt" ] && [ -f "$key" ]; then
+      echo "penpot-certs: using existing certificate"
+      exit 0
+    fi
+    ip="$(sed -n 's|^PENPOT_PUBLIC_URI=https://\([0-9.]*\):9001$|\1|p' ${publicUriEnvFile})"
+    if [ -z "$ip" ]; then
+      ip=127.0.0.1
+    fi
+    echo "penpot-certs: generating self-signed certificate for ''${ip}"
+    ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes \
+      -keyout "$key" -out "$crt" \
+      -subj "/CN=''${ip}" \
+      -addext "subjectAltName=IP:''${ip},IP:127.0.0.1,DNS:localhost"
+    chmod 600 "$key"
+    chmod 644 "$crt"
   '';
 
   assetsMount = "--mount=type=volume,src=penpot_penpot_assets,dst=/opt/data/assets";
@@ -231,13 +261,27 @@ in
         RemainAfterExit = true;
       };
     };
+
+    # TLS 证书：优先使用复制来的证书；缺失时自动生成自签名证书（跨机器自适配）。
+    # SAN 取自 penpot-public-uri.env 探测到的局域网 IP，排在 traefik 之前执行。
+    penpot-certs = {
+      description = "Ensure Penpot traefik TLS certificate (self-signed fallback)";
+      after = [ "network-online.target" "penpot-public-uri.service" ];
+      wants = [ "network-online.target" "penpot-public-uri.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = ensurePenpotCerts;
+        RemainAfterExit = true;
+      };
+    };
   } // lib.genAttrs (map (name: "docker-${name}") (lib.attrNames containers)) (unitName:
     let
       cname = lib.removePrefix "docker-" unitName;
     in
     {
-      after = [ "penpot-network.service" "penpot-public-uri.service" ];
-      wants = [ "penpot-network.service" "penpot-public-uri.service" ];
+      after = [ "penpot-network.service" "penpot-public-uri.service" "penpot-certs.service" ];
+      wants = [ "penpot-network.service" "penpot-public-uri.service" "penpot-certs.service" ];
     }
     // lib.optionalAttrs (builtins.elem cname [ "penpot-backend" "penpot-frontend" "penpot-exporter" ]) {
       # docker run 前同单元内再次探测并刷新 env 文件，规避跨单元重启的时序竞争；
