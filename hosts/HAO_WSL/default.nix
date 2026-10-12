@@ -82,7 +82,7 @@
   ];
 
   # 局域网访问：Penpot 9001 / mailcatcher 1080 / Hindsight 8888、9999
-  # （WSL 走 mirrored 网络，与 Windows 共享 10.144.144.7）
+  # （WSL 走 mirrored 网络，与 Windows 共享 10.144.144.3）
   networking.firewall.allowedTCPPorts = [ 1080 8888 9001 9999 ];
 
   # ── 二进制缓存镜像（与主配置一致，加速下载） ────────────────
