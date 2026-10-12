@@ -34,7 +34,7 @@ wsl -d HAO_WSL -u root -- nixos-rebuild switch --flake github:accoutmissing/HAO_
 见同目录 `.wslconfig` 模板。要点：
 
 - `networkingMode=mirrored`：发行版与 Windows 共享局域网 IP，Penpot/Hindsight 直接以
-  `10.144.144.3:9001|8888|9999` 提供服务，不需要 `netsh portproxy`
+  `<本机IP>:9001|8888|9999` 提供服务（Penpot 的 PUBLIC_URI 由 penpot-public-uri.service 启动时自动探测本机局域网 IP，不硬编码），不需要 `netsh portproxy`
 - `memory=12GB`、`processors=8`：当前宿主机的资源上限，换机时按可用资源调整
 - `[general] instanceIdleTimeout=-1`：禁用发行版空闲自动退出
 - `vmIdleTimeout=86400000`：WSL 虚拟机空闲超时为 24 小时，单位为毫秒

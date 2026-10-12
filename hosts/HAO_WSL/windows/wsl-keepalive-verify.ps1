@@ -20,7 +20,7 @@ $procs | ForEach-Object { "  pid=$($_.ProcessId)" }
 
 # 3. distro + endpoints
 "distro          : $((wsl.exe -l -v) -join ' | ')"
-foreach ($u in @('https://10.144.144.3:9001','http://10.144.144.3:8888/health','http://10.144.144.3:9999/')) {
+foreach ($u in @('https://127.0.0.1:9001','http://127.0.0.1:8888/health','http://127.0.0.1:9999/')) {
     $code = & curl.exe --noproxy '*' -sk -o NUL -w '%{http_code}' --max-time 12 $u
     "$u -> $code"
 }

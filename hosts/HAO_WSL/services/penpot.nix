@@ -27,6 +27,37 @@ let
 
   certsDir = "/var/lib/penpot/certs";
 
+  # 运行时探测生成的环境文件（/run 为 tmpfs，内容因机器而异，不入 Git）；
+  # 容器经 --env-file 注入，避免把某台机器的局域网 IP 硬编码进仓库。
+  publicUriEnvFile = "/run/penpot-public-uri.env";
+  publicUriOpt = "--env-file=${publicUriEnvFile}";
+
+  # 局域网 IP 探测脚本：penpot-public-uri.service 与三个容器的 preStart 共用。
+  # 容器 preStart 引用其 store 路径：探测逻辑变化 → 单元内容变化 → 切换时
+  # 自动重启相关容器，保证容器创建前读到的一定是最新探测值。
+  detectLanIp = pkgs.writeShellScript "penpot-detect-lan-ip" ''
+    ip=
+    # 1) EasyTier 组网网段的本机地址（各机器的稳定组网地址，按机器自动适配）
+    ip="$(${pkgs.iproute2}/bin/ip -4 -o addr show scope global 2>/dev/null | ${pkgs.gawk}/bin/awk '$4 ~ /^10\.144\.144\./ { sub(/\/.*/, "", $4); print $4; exit }')" || ip=
+    if [ -z "$ip" ]; then
+      # 2) 默认路由源地址，仅接受 RFC1918 私网（排除 198.18.x TUN 与公网）
+      ip="$(${pkgs.iproute2}/bin/ip -4 route get 1.1.1.1 2>/dev/null | ${pkgs.gawk}/bin/awk '{ for (i = 1; i <= NF; i++) if ($i == "src") { print $(i + 1); exit } }')" || ip=
+      case "$ip" in
+        10.*|192.168.*|172.1[6-9].*|172.2[0-9].*|172.3[01].*) ;;
+        *) ip= ;;
+      esac
+    fi
+    if [ -z "$ip" ]; then
+      # 3) 首个私网全局地址（跳过 lo/docker/bridge）
+      ip="$(${pkgs.iproute2}/bin/ip -4 -o addr show scope global 2>/dev/null | ${pkgs.gawk}/bin/awk '$2 !~ /^(lo|docker|br-|veth)/ && ($4 ~ /^10\./ || $4 ~ /^192\.168\./ || $4 ~ /^172\.(1[6-9]|2[0-9]|3[01])\./) { sub(/\/.*/, "", $4); print $4; exit }')" || ip=
+    fi
+    if [ -z "$ip" ]; then
+      ip=127.0.0.1
+    fi
+    echo "PENPOT_PUBLIC_URI=https://''${ip}:9001" > ${publicUriEnvFile}
+    echo "penpot-detect-lan-ip: ''${ip}"
+  '';
+
   assetsMount = "--mount=type=volume,src=penpot_penpot_assets,dst=/opt/data/assets";
   postgresMount = "--mount=type=volume,src=penpot_penpot_postgres_v15,dst=/var/lib/postgresql/data";
 
@@ -35,7 +66,8 @@ let
     # （国内网络下易超时重试、占后台 worker）。flag 命名规则为 <enable|disable>-<flag>。
     PENPOT_FLAGS =
       "disable-email-verification enable-smtp enable-prepl-server disable-secure-session-cookies enable-mcp disable-telemetry";
-    PENPOT_PUBLIC_URI = "https://10.144.144.3:9001";
+    # PENPOT_PUBLIC_URI 不再硬编码机器 IP：由 detectLanIp 脚本运行时探测本机
+    # 局域网 IP（EasyTier 组网网段优先）写入 env 文件，经 --env-file 注入。
     PENPOT_HTTP_SERVER_MAX_BODY_SIZE = "367001600";
     PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE = "367001600";
   };
@@ -87,18 +119,17 @@ let
         PENPOT_SMTP_TLS = "false";
         PENPOT_SMTP_SSL = "false";
       };
-      extraOptions = [ netOpt assetsMount ];
+      extraOptions = [ netOpt assetsMount publicUriOpt ];
     };
 
     penpot-exporter = {
       image = penpotImage "exporter";
       dependsOn = [ "penpot-valkey" ];
       environment = penpotSecretKey // {
-        PENPOT_PUBLIC_URI = "https://10.144.144.3:9001";
         PENPOT_INTERNAL_URI = "http://penpot-frontend:8080";
         PENPOT_REDIS_URI = "redis://penpot-valkey/0";
       };
-      extraOptions = [ netOpt ];
+      extraOptions = [ netOpt publicUriOpt ];
     };
 
     penpot-mcp = {
@@ -118,7 +149,7 @@ let
         "traefik.http.routers.penpot.tls" = "true";
         "traefik.http.services.penpot.loadbalancer.server.port" = "8080";
       };
-      extraOptions = [ netOpt assetsMount ];
+      extraOptions = [ netOpt assetsMount publicUriOpt ];
     };
 
     traefik = {
@@ -182,8 +213,35 @@ in
           || ${pkgs.docker}/bin/docker network create ${network}
       '';
     };
-  } // lib.genAttrs (map (name: "docker-${name}") (lib.attrNames containers)) (_: {
-    after = [ "penpot-network.service" ];
-    wants = [ "penpot-network.service" ];
-  });
+
+    # 运行时探测本机局域网 IP 并生成 Penpot PUBLIC_URI 环境文件（自动适配每台机器）：
+    #   1) EasyTier 组网网段 10.144.144.0/24 的本机地址（组网约定，各机器的稳定地址）
+    #   2) 默认路由源地址（仅接受 RFC1918 私网；排除 Clash 等 TUN 的 198.18.x 与公网地址）
+    #   3) 首个私网全局地址（跳过 lo/docker/bridge）   4) 127.0.0.1 兜底
+    # 注：WSL 镜像网络会把 Windows 适配器改名为 ethN（接口名丢失），故按 IP 网段而非
+    #     接口名识别。容器单元经下方 genAttrs 在本单元之后启动，保证 --env-file 读取时文件已生成。
+    penpot-public-uri = {
+      description = "Detect LAN IP and generate Penpot PUBLIC_URI env file";
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = detectLanIp;
+        RemainAfterExit = true;
+      };
+    };
+  } // lib.genAttrs (map (name: "docker-${name}") (lib.attrNames containers)) (unitName:
+    let
+      cname = lib.removePrefix "docker-" unitName;
+    in
+    {
+      after = [ "penpot-network.service" "penpot-public-uri.service" ];
+      wants = [ "penpot-network.service" "penpot-public-uri.service" ];
+    }
+    // lib.optionalAttrs (builtins.elem cname [ "penpot-backend" "penpot-frontend" "penpot-exporter" ]) {
+      # docker run 前同单元内再次探测并刷新 env 文件，规避跨单元重启的时序竞争；
+      # store 路径随探测逻辑变化，切换时单元内容变化会触发容器重启拿到新值。
+      preStart = "exec ${detectLanIp}";
+    });
 }
