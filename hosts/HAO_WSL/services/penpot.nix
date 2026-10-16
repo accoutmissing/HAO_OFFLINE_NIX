@@ -10,7 +10,10 @@
 #     从旧环境用 tar 还原时保留数字属主即可。
 #   * healthcheck / depends_on(condition: service_healthy)：oci-containers 不支持，
 #     改为 systemd 单元顺序 + 容器重启策略，Postgres 就绪前后端会自行重试。
-#   * PENPOT_SECRET_KEY 保持旧环境的 compose 默认值，避免既有登录会话失效。
+#   * Penpot 应用机密从 /var/lib/hao-secrets/penpot.env 注入；PostgreSQL
+#     初始化密码单独从 /var/lib/hao-secrets/penpot-postgres.env 注入。
+#     两个文件由 scripts/install-secrets.sh 安装为 root:root 0600。
+#     已有数据库不会因 POSTGRES_PASSWORD 改变而自动轮换角色密码，轮换步骤见 README。
 #
 # 证书不在 Git 里：/var/lib/penpot/certs/{penpot.crt,penpot.key} 优先从旧环境复制；
 # 缺失时由 penpot-certs.service 自动生成自签名证书（SAN 含探测到的局域网 IP）——
@@ -28,6 +31,8 @@ let
   netOpt = "--network=${network}";
 
   certsDir = "/var/lib/penpot/certs";
+  penpotSecretsFile = "/var/lib/hao-secrets/penpot.env";
+  postgresSecretsFile = "/var/lib/hao-secrets/penpot-postgres.env";
 
   # 运行时探测生成的环境文件（/run 为 tmpfs，内容因机器而异，不入 Git）；
   # 容器经 --env-file 注入，避免把某台机器的局域网 IP 硬编码进仓库。
@@ -102,10 +107,6 @@ let
     PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE = "367001600";
   };
 
-  penpotSecretKey = {
-    PENPOT_SECRET_KEY = "change-this-insecure-key";
-  };
-
   containers = {
     penpot-postgres = {
       image = "${mirror}/library/postgres:15";
@@ -113,8 +114,8 @@ let
         POSTGRES_INITDB_ARGS = "--data-checksums";
         POSTGRES_DB = "penpot";
         POSTGRES_USER = "penpot";
-        POSTGRES_PASSWORD = "penpot";
       };
+      environmentFiles = [ postgresSecretsFile ];
       extraOptions = [ netOpt "--stop-signal=SIGINT" postgresMount ];
     };
 
@@ -133,10 +134,9 @@ let
     penpot-backend = {
       image = penpotImage "backend";
       dependsOn = [ "penpot-postgres" "penpot-valkey" ];
-      environment = penpotFlags // penpotSecretKey // {
+      environment = penpotFlags // {
         PENPOT_DATABASE_URI = "postgresql://penpot-postgres/penpot";
         PENPOT_DATABASE_USERNAME = "penpot";
-        PENPOT_DATABASE_PASSWORD = "penpot";
         PENPOT_REDIS_URI = "redis://penpot-valkey/0";
         PENPOT_OBJECTS_STORAGE_BACKEND = "fs";
         PENPOT_OBJECTS_STORAGE_FS_DIRECTORY = "/opt/data/assets";
@@ -149,16 +149,18 @@ let
         PENPOT_SMTP_TLS = "false";
         PENPOT_SMTP_SSL = "false";
       };
+      environmentFiles = [ penpotSecretsFile ];
       extraOptions = [ netOpt assetsMount publicUriOpt ];
     };
 
     penpot-exporter = {
       image = penpotImage "exporter";
       dependsOn = [ "penpot-valkey" ];
-      environment = penpotSecretKey // {
+      environment = {
         PENPOT_INTERNAL_URI = "http://penpot-frontend:8080";
         PENPOT_REDIS_URI = "redis://penpot-valkey/0";
       };
+      environmentFiles = [ penpotSecretsFile ];
       extraOptions = [ netOpt publicUriOpt ];
     };
 
@@ -243,7 +245,6 @@ in
           || ${pkgs.docker}/bin/docker network create ${network}
       '';
     };
-
     # 运行时探测本机局域网 IP 并生成 Penpot PUBLIC_URI 环境文件（自动适配每台机器）：
     #   1) EasyTier 组网网段 10.144.144.0/24 的本机地址（组网约定，各机器的稳定地址）
     #   2) 默认路由源地址（仅接受 RFC1918 私网；排除 Clash 等 TUN 的 198.18.x 与公网地址）
@@ -283,9 +284,20 @@ in
       after = [ "penpot-network.service" "penpot-public-uri.service" "penpot-certs.service" ];
       wants = [ "penpot-network.service" "penpot-public-uri.service" "penpot-certs.service" ];
     }
-    // lib.optionalAttrs (builtins.elem cname [ "penpot-backend" "penpot-frontend" "penpot-exporter" ]) {
-      # docker run 前同单元内再次探测并刷新 env 文件，规避跨单元重启的时序竞争；
-      # store 路径随探测逻辑变化，切换时单元内容变化会触发容器重启拿到新值。
-      preStart = "exec ${detectLanIp}";
+    // lib.optionalAttrs (builtins.elem cname [ "penpot-postgres" "penpot-backend" "penpot-frontend" "penpot-exporter" ]) {
+      preStart = ''
+        ${lib.optionalString (builtins.elem cname [ "penpot-postgres" "penpot-backend" "penpot-exporter" ]) ''
+          secrets_file=${if cname == "penpot-postgres" then postgresSecretsFile else penpotSecretsFile}
+          if [ ! -f "$secrets_file" ] || [ -L "$secrets_file" ]; then
+            echo "Penpot secrets missing: run bash scripts/setup.sh --penpot, then sudo bash scripts/install-secrets.sh --penpot (use --rotate-penpot-db for an existing database)." >&2
+            exit 1
+          fi
+          if [ "$(${pkgs.coreutils}/bin/stat -c '%a:%U:%G' "$secrets_file")" != "600:root:root" ]; then
+            echo "Penpot secrets must be owned by root:root with mode 0600: $secrets_file" >&2
+            exit 1
+          fi
+        ''}
+        ${lib.optionalString (builtins.elem cname [ "penpot-backend" "penpot-frontend" "penpot-exporter" ]) "exec ${detectLanIp}"}
+      '';
     });
 }

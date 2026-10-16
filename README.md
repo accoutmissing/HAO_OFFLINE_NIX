@@ -36,6 +36,31 @@
 | **HAO_WSL** | Windows WSL2 | main | Penpot + Hindsight 常驻（声明式容器/systemd）；uid 1500 规避 WSL 用户会话缺陷 |
 | **HAO_SERVER** | 家庭服务器 / VPS | **HAO_SERVER** | 无头服务器，fail2ban + 容器 + 自动更新 |
 
+### HAO_WSL Penpot 首次部署与密钥轮换
+
+在 HAO_WSL 的仓库工作副本中，首次部署前生成并安装随机凭据，再切换系统：
+
+```bash
+bash scripts/setup.sh --penpot
+mkpasswd -m yescrypt > secrets/admin-password-hash
+sudo bash scripts/install-secrets.sh --penpot
+sudo nixos-rebuild switch --flake .#HAO_WSL
+```
+
+`secrets/penpot.env` 与 `secrets/penpot-postgres.env` 被 Git 忽略；安装脚本校验应用与数据库密码相同，并安装为 root:root 0600。backend/exporter 只读取 Penpot 应用环境文件，PostgreSQL 只读取包含 `POSTGRES_PASSWORD` 的独立文件。机密值不写入 Nix 表达式或 Nix store。
+
+PostgreSQL 官方镜像只在数据卷首次初始化时读取 `POSTGRES_PASSWORD`。如果检测到已有 `penpot_penpot_postgres_v15` 卷且本地两份凭据未匹配安装文件，安装脚本会拒绝普通安装。先做数据库备份，再生成轮换凭据并用 `--rotate-penpot-db`：它停止 backend/exporter，使用 psql 的 `\password` 从标准输入轮换 `penpot` 数据库角色密码，随后安装匹配的新环境文件；密码不会出现在命令参数或 PostgreSQL 明文语句日志中。然后运行上面的 `nixos-rebuild switch` 让应用读取新值。该操作同时生成新的 `PENPOT_SECRET_KEY`，已有 Penpot 会话和邀请可能失效。轮换后再次运行普通安装会识别文件已匹配并成功退出。
+
+```bash
+umask 077
+sudo docker exec penpot-postgres pg_dump -U penpot -d penpot > "$HOME/penpot-backup.sql"
+bash scripts/setup.sh --penpot --rotate
+sudo bash scripts/install-secrets.sh --rotate-penpot-db
+sudo nixos-rebuild switch --flake .#HAO_WSL
+```
+
+请确认备份文件可读且内容完整后再执行轮换。安装脚本不会覆盖目标机已有的不同密钥；数据库轮换应在 HAO_WSL 本机对正在运行的 Postgres 容器执行。
+
 ## 🚀 快速开始
 
 - 🐣 **第一次接触 Linux？** → [📖 安装入门指南（写给纯小白）](./INSTALL_GUIDE.md)
