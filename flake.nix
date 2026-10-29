@@ -44,12 +44,69 @@
     let
       inherit (nixpkgs) lib;
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      securityOverlay = _final: prev: {
+        # Drop this patch when the locked edk2 package includes upstream PR 13302,
+        # even if nixpkgs keeps the edk2-stable202608 version.
+        edk2 = prev.edk2.overrideAttrs (old: {
+          src = prev.applyPatches {
+            name = "edk2-202608-security-patched-src";
+            inherit (old) src;
+            patches = [
+              (prev.fetchpatch {
+                url = "https://github.com/tianocore/edk2/pull/13302.patch";
+                name = "GHSA-99cj-7hg9-mp4m_CVE-2026-97631.patch";
+                hash = "sha256-Hec2ei9mFOYXuleeoOYahv7ibbaTOD5LdW2V53lacQc=";
+              })
+            ];
+          };
+        });
+        # The current lock selects vulnerable 2.34.8. Let a future safe
+        # nixpkgs stable package pass through without pinning it to this fix.
+        nixVersions =
+          let
+            stableNixVersion = prev.nixVersions.stable.version;
+          in
+          if stableNixVersion == "2.34.8" then
+            prev.nixVersions.extend
+              (nfinal: nprev: {
+                nix_2_34 =
+                  let
+                    source = prev.fetchFromGitHub {
+                      owner = "NixOS";
+                      repo = "nix";
+                      tag = "2.34.9";
+                      hash = "sha256-ZJwg/qG4M1Impy774HKMZ3Hsq7vlBJy7sXl1fI9QDXI=";
+                    };
+                  in
+                  ((nprev.nix_2_34.overrideSource source).overrideAllMesonComponents (_: _: {
+                    version = "2.34.9";
+                  })).overrideAttrs (_: {
+                    version = "2.34.9";
+                  });
+                stable = nfinal.nix_2_34;
+              })
+          # The October 2026 advisory affects Nix 2.35.0 through 2.35.2.
+          # Fail closed on that range; fixed 2.35.3+ and existing backports pass through.
+          else if lib.versionAtLeast stableNixVersion "2.35.0"
+            && lib.versionOlder stableNixVersion "2.35.3" then
+            throw "Nix ${stableNixVersion} is in affected range 2.35.0–2.35.2 for GHSA-jwvx-xq5j-gc56 (CVE-2026-110450); use a fixed nixpkgs/Nix release."
+          else
+            prev.nixVersions;
+      };
+      securityPackageModule = { pkgs, ... }: {
+        nixpkgs.overlays = [ securityOverlay ];
+        nix.package = pkgs.nixVersions.stable;
+      };
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ securityOverlay ];
+      };
       mylib = import ./lib { inherit lib; };
       myvars = import ./vars { };
 
       # 基础模块列表（所有主机共享）
       baseModules = [
+        securityPackageModule
         ./modules/nixos/base
         ./modules/nixos/desktop
         disko.nixosModules.default
@@ -95,7 +152,7 @@
         specialArgs = inputs // {
           inherit inputs self system offlineHost;
         };
-        modules = [ ./installer/iso.nix ];
+        modules = [ securityPackageModule ./installer/iso.nix ];
       };
       haoInstaller = mkInstaller null;
       haoDesktopInstaller = mkInstaller "HAO_DESKTOP";
@@ -125,6 +182,7 @@
             myvars = myvars // { hostname = "HAO_WSL"; };
           };
           modules = [
+            securityPackageModule
             nixos-wsl.nixosModules.default
             home-manager.nixosModules.home-manager
             {
