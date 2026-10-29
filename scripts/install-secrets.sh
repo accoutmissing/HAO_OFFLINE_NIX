@@ -7,8 +7,15 @@ TARGET_ROOT="/"
 PENPOT_REQUIRED=0
 ROTATE_PENPOT_DB=0
 
-if [ "${1:-}" = "--penpot" ]; then PENPOT_REQUIRED=1; shift; fi
-if [ "${1:-}" = "--rotate-penpot-db" ]; then PENPOT_REQUIRED=1; ROTATE_PENPOT_DB=1; shift; fi
+if [ "${1:-}" = "--penpot" ]; then
+  PENPOT_REQUIRED=1
+  shift
+fi
+if [ "${1:-}" = "--rotate-penpot-db" ]; then
+  PENPOT_REQUIRED=1
+  ROTATE_PENPOT_DB=1
+  shift
+fi
 if [ "$#" -gt 1 ]; then
   echo "Usage: $0 [--penpot|--rotate-penpot-db] [target-root]" >&2
   exit 2
