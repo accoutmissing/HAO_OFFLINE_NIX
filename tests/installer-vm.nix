@@ -144,13 +144,13 @@ let
     nix() {
       local operation="''${1:-unknown}" command_started=$SECONDS status
       printf '[installer-vm cache-selection] nix start operation=%s stage=%s\n' \
-        "$operation" "$stage"
+        "$operation" "$stage" >&2
       set +e
       command nix "$@"
       status=$?
       set -e
       printf '[installer-vm cache-selection] nix end operation=%s stage=%s elapsed_seconds=%s exit=%s\n' \
-        "$operation" "$stage" "$((SECONDS - command_started))" "$status"
+        "$operation" "$stage" "$((SECONDS - command_started))" "$status" >&2
       return "$status"
     }
     CONFIG_SOURCE=/etc/hao-installer/network-config
