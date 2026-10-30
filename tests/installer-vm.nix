@@ -89,7 +89,7 @@ let
           name = "hao-online-install-fixture";
           system = "${pkgs.stdenv.hostPlatform.system}";
           builder = storePath "${pkgs.bash}" + "/bin/bash";
-          args = [ "-c" "''${storePath "${pkgs.coreutils}"}/bin/ln -s ''${storePath "${target.config.system.build.toplevel}"} $out" ];
+          args = [ "-c" "''${storePath "${pkgs.coreutils}"}/bin/ln -s ''${storePath "${fixtureSource}"} $out" ];
         };
       };
     }
