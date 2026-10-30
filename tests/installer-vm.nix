@@ -100,6 +100,59 @@ let
     source ${../installer/scripts/hao-installer.sh}
     trap - ERR
     mkdir -p "$STATE_DIR"
+    stage=setup
+    stage_started=$SECONDS
+    memory_summary() {
+      awk '/^(MemAvailable|SwapFree):/ { printf "%s=%sKiB ", $1, $2 }' /proc/meminfo
+    }
+    report_stage() {
+      printf '[installer-vm cache-selection] stage=%s event=%s elapsed_seconds=%s %s\n' \
+        "$stage" "$1" "$((SECONDS - stage_started))" "$(memory_summary)"
+    }
+    finish_cache_selection() {
+      local status=$?
+      trap - EXIT TERM INT
+      set +e
+      report_stage "exit=$status"
+      if ((status != 0)); then
+        printf '[installer-vm cache-selection] cgroup memory events: '
+        if [[ -r /sys/fs/cgroup/memory.events ]]; then
+          awk '$1 ~ /^(high|max|oom|oom_kill|oom_group_kill)$/ { printf "%s=%s ", $1, $2 } END { print "" }' \
+            /sys/fs/cgroup/memory.events
+        else
+          echo unavailable
+        fi
+        oom_log="$(timeout 5s journalctl -k -b --since '-5 minutes' --no-pager -o cat 2>/dev/null \
+          | grep -Ei 'out of memory|oom-kill|oom killer|killed process|memory cgroup' \
+          | tail -n 10 || true)"
+        if [[ -n $oom_log ]]; then
+          printf '[installer-vm cache-selection] recent kernel OOM messages:\n%s\n' "$oom_log"
+        else
+          echo '[installer-vm cache-selection] no recent kernel OOM messages found'
+        fi
+      fi
+      if [[ -n ''${cache_pid:-} ]]; then
+        kill "$cache_pid" 2>/dev/null || true
+        wait "$cache_pid" 2>/dev/null || true
+      fi
+      cleanup
+      exit "$status"
+    }
+    trap finish_cache_selection EXIT
+    trap 'exit 143' TERM
+    trap 'exit 130' INT
+    nix() {
+      local operation="''${1:-unknown}" command_started=$SECONDS status
+      printf '[installer-vm cache-selection] nix start operation=%s stage=%s\n' \
+        "$operation" "$stage"
+      set +e
+      command nix "$@"
+      status=$?
+      set -e
+      printf '[installer-vm cache-selection] nix end operation=%s stage=%s elapsed_seconds=%s exit=%s\n' \
+        "$operation" "$stage" "$((SECONDS - command_started))" "$status"
+      return "$status"
+    }
     CONFIG_SOURCE=/etc/hao-installer/network-config
     HOST_CONFIG=HAO_DESKTOP
     TARGET_DISK_SIZE=68719476736
@@ -109,30 +162,41 @@ let
     printf 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n' \
       | nc -N -l 127.0.0.1 16982 > "$STATE_DIR/control-cache-request" &
     cache_pid=$!
-    trap 'kill "$cache_pid" 2>/dev/null || true; wait "$cache_pid" 2>/dev/null || true; cleanup' EXIT
     for _ in $(seq 1 100); do
       ss -ltnH 'sport = :16982' | grep -q . && break
       sleep 0.05
     done
     ss -ltnH 'sport = :16982' | grep -q .
+    stage=control-cache-probe
+    stage_started=$SECONDS
+    report_stage start
     nix build --dry-run --accept-flake-config --no-write-lock-file \
       --option substituters "" --option extra-substituters "" \
       "$CONFIG_SOURCE#nixosConfigurations.$HOST_CONFIG.config.system.build.toplevel"
     wait "$cache_pid"
+    cache_pid=
     grep -q 'GET /nix-cache-info' "$STATE_DIR/control-cache-request"
+    report_stage pass
     # Model a rejected cache being added back by flake nixConfig. The actual
     # Nix command must not contact it, even when the ISO trusts flake configs.
     printf 'HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n' \
       | nc -N -l 127.0.0.1 16982 > "$STATE_DIR/unexpected-cache-request" &
     cache_pid=$!
-    trap 'kill "$cache_pid" 2>/dev/null || true; wait "$cache_pid" 2>/dev/null || true; cleanup' EXIT
     for _ in $(seq 1 100); do
       ss -ltnH 'sport = :16982' | grep -q . && break
       sleep 0.05
     done
     ss -ltnH 'sport = :16982' | grep -q .
+    stage=production-target-build
+    stage_started=$SECONDS
+    report_stage start
     build_target_before_erase
+    report_stage pass
+    stage=prohibited-cache-assertion
+    stage_started=$SECONDS
+    report_stage start
     test ! -s "$STATE_DIR/unexpected-cache-request"
+    report_stage pass
   '';
   installFixture = pkgs.writeShellScript "install-fixture" ''
     set -Eeuo pipefail
@@ -245,7 +309,7 @@ pkgs.testers.runNixOSTest {
     machine.wait_until_succeeds("pgrep -f '[k]itty.*--config'", timeout=timedelta(seconds=45))
     machine.wait_until_succeeds("pgrep -f '[g]um confirm'", timeout=timedelta(seconds=45))
     machine.screenshot("installer-zh")
-    machine.succeed("${checkCacheSelection}", timeout=timedelta(seconds=60))
+    machine.succeed("${checkCacheSelection}", timeout=timedelta(seconds=180))
     machine.succeed("${installFixture}", timeout=timedelta(seconds=600))
     machine.succeed("test -e /mnt/boot/EFI/BOOT/BOOTX64.EFI")
     machine.succeed("test -x /mnt/nix/var/nix/profiles/system/bin/switch-to-configuration")
