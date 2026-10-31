@@ -63,8 +63,8 @@ if [ "$SETUP_PENPOT" -eq 1 ]; then
     {
       printf 'PENPOT_SECRET_KEY=%s\n' "$penpot_key"
       printf 'PENPOT_DATABASE_PASSWORD=%s\n' "$db_password"
-    } > "$penpot_tmp"
-    printf 'POSTGRES_PASSWORD=%s\n' "$db_password" > "$postgres_tmp"
+    } >"$penpot_tmp"
+    printf 'POSTGRES_PASSWORD=%s\n' "$db_password" >"$postgres_tmp"
     chmod 600 "$penpot_tmp"
     chmod 600 "$postgres_tmp"
     mv "$penpot_tmp" "$PENPOT_FILE"

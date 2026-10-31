@@ -86,6 +86,9 @@
   networking.firewall.allowedTCPPorts = [ 1080 8888 9001 9999 ];
 
   # ── 二进制缓存镜像（与主配置一致，加速下载） ────────────────
+  # This host does not import modules/nixos/base/nix.nix, but Home Manager invokes nix-command.
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   nix.settings.substituters = [
     "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
     "https://mirrors.ustc.edu.cn/nix-channels/store"
