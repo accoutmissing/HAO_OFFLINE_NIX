@@ -44,7 +44,10 @@
     let
       inherit (nixpkgs) lib;
       system = "x86_64-linux";
-      securityOverlay = _final: prev: {
+      # The EFI image builder uses pkgs.buildPackages.mtools. Nixpkgs
+      # applies this overlay to buildPackages as well as the host package set.
+      mtoolsSecurityOverlay = import ./lib/mtools-overlay.nix { inherit lib; };
+      securityOverlay = _final: prev: (mtoolsSecurityOverlay _final prev) // {
         # Drop this patch when the locked edk2 package includes upstream PR 13302,
         # even if nixpkgs keeps the edk2-stable202608 version.
         edk2 = prev.edk2.overrideAttrs (old: {
