@@ -28,6 +28,11 @@ jobs:
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_OFFLINE.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#nixosConfigurations.HAO_WSL.config.system.build.toplevel.drvPath
       - run: nix eval --no-write-lock-file .#packages.x86_64-linux.hao-installer-iso.drvPath
+      # 两个离线安装镜像的 ISO 闭包同样要能求值：它们的 bundle 把全部输入写进
+      # storeContents，锁文件里任何一个输入失效都会在这里先炸，而不是等到两天后
+      # 的离线构建流水线才发现。
+      - run: nix eval --no-write-lock-file .#packages.x86_64-linux.hao-installer-offline-desktop-iso.drvPath
+      - run: nix eval --no-write-lock-file .#packages.x86_64-linux.hao-installer-offline-laptop-iso.drvPath
 
       # GTX 1060 uses the legacy branch; validate it against the locked kernel.
       - run: nix build --no-link --no-write-lock-file .#nixosConfigurations.HAO_OFFLINE.config.hardware.nvidia.package.mod
