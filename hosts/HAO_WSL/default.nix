@@ -100,6 +100,15 @@
     "nix-community.cachix.org-1:4BzitgziQkMCO+4QhMhVA8Wp9T5IhzsaCqPCU3c1gQ8="
   ];
 
+  # 本主机不导入 modules/nixos/base/nix.nix，所以那边的 weekly GC 也不会生效：
+  # 实测这台机器上 nix-gc.timer 根本不存在，store 只增不减（2026-11 已是 34 GiB）。
+  # 这里显式补上同样的策略，保留 7 天内的旧版本以便回滚。
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
+
   # 这是 Agent 调试环境；admin 没有声明登录密码，因此保留 passwordless sudo，
   # 避免首次切换配置后无法继续管理系统。
   security.sudo.wheelNeedsPassword = false;
