@@ -21,8 +21,8 @@
 #   同时运行时用户会话正常；不固定 uid 时也可用
 #   `wsl -d <其它发行版> -u root` 或先 `wsl --terminate <其它发行版>` 规避。
 #
-# Windows 宿主机侧的设置（导入发行版、.wslconfig、保活脚本、登录自启）见
-# ./windows/README.md：模板使用 instanceIdleTimeout=-1 禁用发行版空闲退出，
+# Windows 宿主机侧的设置（导入发行版、.wslconfig、保活脚本、登录自启）没有纳入本仓库：
+# 模板使用 instanceIdleTimeout=-1 禁用发行版空闲退出，
 # 并保留保活脚本以及计划任务/启动文件夹作为旧版 WSL 的兼容兜底。
 
 { pkgs, ... }:
@@ -99,6 +99,15 @@
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     "nix-community.cachix.org-1:4BzitgziQkMCO+4QhMhVA8Wp9T5IhzsaCqPCU3c1gQ8="
   ];
+
+  # 本主机不导入 modules/nixos/base/nix.nix，所以那边的 weekly GC 也不会生效：
+  # 实测这台机器上 nix-gc.timer 根本不存在，store 只增不减（2026-11 已是 34 GiB）。
+  # 这里显式补上同样的策略，保留 7 天内的旧版本以便回滚。
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 7d";
+  };
 
   # 这是 Agent 调试环境；admin 没有声明登录密码，因此保留 passwordless sudo，
   # 避免首次切换配置后无法继续管理系统。
