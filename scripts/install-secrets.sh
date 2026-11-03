@@ -142,15 +142,30 @@ if [ "$TARGET_ROOT" = / ] && command -v docker >/dev/null 2>&1 && docker volume 
   install -m 0600 -o root -g root "$PENPOT_SOURCE" "$staged_file"
   install -m 0600 -o root -g root "$PENPOT_POSTGRES_SOURCE" "$staged_postgres_file"
 
+  # 官方 postgres 镜像只会创建 POSTGRES_USER（本机为 penpot）这一个角色，
+  # 不存在名为 postgres 的角色；用 --user postgres 只是选容器内的进程用户，
+  # psql 仍需要一个真实角色，否则报 role "postgres" does not exist。
+  pg_role="$(docker exec penpot-postgres printenv POSTGRES_USER || true)"
+  case "$pg_role" in
+  "" | *[!A-Za-z0-9_]*)
+    echo "Error: cannot determine POSTGRES_USER from the running penpot-postgres container." >&2
+    exit 1
+    ;;
+  esac
   # Stop app containers first. psql's \password reads both entries from stdin,
   # hashes client-side, and avoids cleartext in argv and PostgreSQL statement logs.
   systemctl stop docker-penpot-backend.service docker-penpot-exporter.service
   printf '%s\n%s\n' "$db_password" "$db_password" |
-    docker exec -i --user postgres penpot-postgres psql -v ON_ERROR_STOP=1 -d penpot -c '\password penpot'
+    docker exec -i --user postgres penpot-postgres psql -U "$pg_role" -v ON_ERROR_STOP=1 -d penpot -c '\password '"$pg_role"
   mv -f "$staged_file" "$PENPOT_TARGET"
   mv -f "$staged_postgres_file" "$PENPOT_POSTGRES_TARGET"
   trap - EXIT
-  echo "Updated the existing Penpot database role and installed root-only secrets. Run nixos-rebuild switch for HAO_WSL to restart the app with them."
+  # docker-traefik 通过 Requires= 依赖 docker-penpot-frontend，重启前端会连带停掉
+  # traefik，所以这里显式把应用容器和 traefik 一起重启，而不是让用户去跑
+  # nixos-rebuild switch（生成的单元没变化，switch 不会重启它们）。
+  systemctl restart docker-penpot-backend.service docker-penpot-exporter.service docker-penpot-frontend.service
+  systemctl restart docker-traefik.service
+  echo "Updated the existing Penpot database role, installed root-only secrets and restarted the app containers."
   exit 0
 fi
 
