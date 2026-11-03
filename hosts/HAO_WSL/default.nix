@@ -118,5 +118,7 @@
   # 从而污染自动化判断（Ubuntu 等其它 WSL 发行版同样有这个无害的失败单元）。
   systemd.services."getty@tty1".enable = false;
 
-  system.stateVersion = "25.05";
+  # 本机镜像属 26.05 系列（gen1 = nixos-system-nixos-26.05.20260603），
+  # 声明值必须与实际安装版本一致。
+  system.stateVersion = "26.05";
 }

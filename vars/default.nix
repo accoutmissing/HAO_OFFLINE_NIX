@@ -22,6 +22,8 @@ in
 {
   username = "admin";
   userfullname = "Admin";
+  # 公开仓库不写真实邮箱；要让提交归属 GitHub，在本机覆盖:
+  #   git config --global user.email "<id>+<user>@users.noreply.github.com"
   useremail = "admin@example.com";
 
   # 主机名占位值（各 hosts/<hostname>/default.nix 中覆盖）
