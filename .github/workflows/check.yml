@@ -8,12 +8,24 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # update-flake-lock 用这个入口验证它刚推上去的分支：由 GITHUB_TOKEN 创建的
+  # PR 不会触发 pull_request 事件，只能靠 workflow_call 把检查跑起来。
+  # 不这么做的话机器人 PR 会永远停在 action_required（PR #3 就这样躺了两周）。
+  workflow_call:
+    inputs:
+      ref:
+        description: 要检查的 ref；留空则用触发事件的 ref
+        type: string
+        required: false
+        default: ""
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref }}
 
       - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
         with:
