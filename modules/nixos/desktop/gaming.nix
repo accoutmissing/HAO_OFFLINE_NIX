@@ -36,6 +36,14 @@ in
       KERNEL=="ntsync", SUBSYSTEM=="misc", GROUP="users", MODE="0660"
     '';
 
+    # nixpkgs 2026-11 起把 gtk2 标记为 broken（NixOS/nixpkgs#410814：最终版
+    # 2.24.33 停在 2020-12，计划 27.05 移除），而 lutris 的 fhsenv rootfs 仍然
+    # 把 gtk+2.24.33 拖进闭包，于是整台桌面的 toplevel 直接拒绝求值：
+    #   error: Refusing to evaluate package 'gtk+-2.24.33' ... because it has problems
+    # 官方给的出口就是 problems.handlers。这里是有意的、有期限的放行：warn 会在
+    # 构建日志里继续提示，等 lutris 迁到 gtk3 就该删掉这条。
+    nixpkgs.config.problems.handlers."gtk+".broken = "warn";
+
     # ── 系统级游戏包 ────────────────────────────────────────────────────
     environment.systemPackages = with pkgs; [
       lutris
