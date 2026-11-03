@@ -49,7 +49,7 @@ sudo nixos-rebuild switch --flake .#HAO_WSL
 
 `secrets/penpot.env` 与 `secrets/penpot-postgres.env` 被 Git 忽略；安装脚本校验应用与数据库密码相同，并安装为 root:root 0600。backend/exporter 只读取 Penpot 应用环境文件，PostgreSQL 只读取包含 `POSTGRES_PASSWORD` 的独立文件。机密值不写入 Nix 表达式或 Nix store。
 
-PostgreSQL 官方镜像只在数据卷首次初始化时读取 `POSTGRES_PASSWORD`。如果检测到已有 `penpot_penpot_postgres_v15` 卷且本地两份凭据未匹配安装文件，安装脚本会拒绝普通安装。先做数据库备份，再生成轮换凭据并用 `--rotate-penpot-db`：它停止 backend/exporter，使用 psql 的 `\password` 从标准输入轮换 `penpot` 数据库角色密码，随后安装匹配的新环境文件；密码不会出现在命令参数或 PostgreSQL 明文语句日志中。然后运行上面的 `nixos-rebuild switch` 让应用读取新值。该操作同时生成新的 `PENPOT_SECRET_KEY`，已有 Penpot 会话和邀请可能失效。轮换后再次运行普通安装会识别文件已匹配并成功退出。
+PostgreSQL 官方镜像只在数据卷首次初始化时读取 `POSTGRES_PASSWORD`。如果检测到已有 `penpot_penpot_postgres_v15` 卷且本地两份凭据未匹配安装文件，安装脚本会拒绝普通安装。先做数据库备份，再生成轮换凭据并用 `--rotate-penpot-db`：它停止 backend/exporter，使用 psql 的 `\password` 从标准输入轮换 `penpot` 数据库角色密码，随后安装匹配的新环境文件并重启 backend / exporter / frontend 与 traefik（无需再跑 `nixos-rebuild switch`，生成的单元没有变化、switch 不会重启容器）；密码不会出现在命令参数或 PostgreSQL 明文语句日志中。该操作同时生成新的 `PENPOT_SECRET_KEY`，已有 Penpot 会话和邀请可能失效。轮换后再次运行普通安装会识别文件已匹配并成功退出。
 
 ```bash
 umask 077
