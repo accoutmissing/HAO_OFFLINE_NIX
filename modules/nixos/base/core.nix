@@ -16,5 +16,7 @@
 
   # ── tmpfs on /tmp（减少 NVMe 写入） ──────────────────────────────
   boot.tmp.useTmpfs = true;
-  boot.tmp.tmpfsSize = "50%";
+  # 按百分比取 50% 会让 /tmp 与 zram 各占一半内存且都没有硬上限，
+  # 大构建（ISO / Rust / Qt）容易触发 OOM；给一个绝对值上限。
+  boot.tmp.tmpfsSize = "8G";
 }

@@ -1,6 +1,6 @@
 # 🖥️ HAO NixOS 配置
 
-一套 **Flake + Home Manager** 管理的 NixOS 配置，覆盖 **笔记本 + 台式机 + WSL + 服务器** 四种场景，多台设备共享一套配置，各自只写硬件差异。
+一套 **Flake + Home Manager** 管理的 NixOS 配置，覆盖 **笔记本 + 台式机 + WSL** 三种场景，多台设备共享一套配置，各自只写硬件差异。
 
 ## ✨ 配置特点
 
@@ -21,7 +21,7 @@
 | 🔒 安全 | SSH 禁密码 + root 锁定 + root-only 运行时 secrets（不进 Git / Nix store） |
 | 🔄 系统 | Btrfs + zstd 压缩 + zram + 每周自动 GC |
 | 🇨🇳 国内优化 | 清华/中科大镜像 + 超时优化 |
-| 🔧 CI | GitHub Actions `nix flake check` + 四主机/ISO eval + Release ISO 构建 |
+| 🔧 CI | GitHub Actions `nix flake check` + 三主机 + 安装 ISO 的 eval + Release ISO 构建 |
 
 每周 `update-flake-lock` 会创建 PR；仓库所有者需在 GitHub 的
 `Settings → Actions → General → Workflow permissions` 启用
@@ -34,7 +34,7 @@
 | **HAO_OFFLINE** | 神舟战神 Z7-KP7Z | main | i7-8750H + GTX 1060，Optimus 按需调用 |
 | **HAO_DESKTOP** | 自组台式机 | main | i5-13600KF + RTX 4070S，独显常开 |
 | **HAO_WSL** | Windows WSL2 | main | Penpot + Hindsight 常驻（声明式容器/systemd）；uid 1500 规避 WSL 用户会话缺陷 |
-| **HAO_SERVER** | 家庭服务器 / VPS | **HAO_SERVER** | 无头服务器，fail2ban + 容器 + 自动更新 |
+| **HAO_SERVER** | 家庭服务器 / VPS | —（独立维护，不在本仓库） | 无头服务器，fail2ban + 容器 + 自动更新 |
 
 ### HAO_WSL Penpot 首次部署与密钥轮换
 
