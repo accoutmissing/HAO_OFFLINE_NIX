@@ -21,8 +21,8 @@
 #   同时运行时用户会话正常；不固定 uid 时也可用
 #   `wsl -d <其它发行版> -u root` 或先 `wsl --terminate <其它发行版>` 规避。
 #
-# Windows 宿主机侧的设置（导入发行版、.wslconfig、保活脚本、登录自启）见
-# ./windows/README.md：模板使用 instanceIdleTimeout=-1 禁用发行版空闲退出，
+# Windows 宿主机侧的设置（导入发行版、.wslconfig、保活脚本、登录自启）没有纳入本仓库：
+# 模板使用 instanceIdleTimeout=-1 禁用发行版空闲退出，
 # 并保留保活脚本以及计划任务/启动文件夹作为旧版 WSL 的兼容兜底。
 
 { pkgs, ... }:
