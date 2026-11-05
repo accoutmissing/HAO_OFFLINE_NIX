@@ -119,9 +119,10 @@ in
     text = "${self.nixosConfigurations.${offlineHost}.config.system.build.toplevel}\n";
   };
   fonts.packages = [ pkgs.dejavu_fonts pkgs.noto-fonts-cjk-sans ];
+  fonts.fontconfig.enable = true;
   i18n.supportedLocales = [ "en_US.UTF-8/UTF-8" "zh_CN.UTF-8/UTF-8" ];
   environment.etc."hao-installer/kitty.conf".text = ''
-    font_family DejaVu Sans Mono
+    font_family Noto Sans Mono CJK SC
     font_size 13
     linux_display_server wayland
     window_padding_width 12
