@@ -2,6 +2,14 @@
 let
   inherit (lib) mkEnableOption mkIf;
   cfg = config.modules.desktop.noctalia;
+  system = pkgs.stdenv.hostPlatform.system;
+  # Qt 6.12 MOC fix from https://github.com/quickshell-mirror/quickshell/commit/5d5d49873fe8cf1f99ddfd5006ceb2057c5c9b13, adjusted for locked noctalia-qs f308426.
+  quickshellQt612 = inputs.noctalia.inputs.noctalia-qs.packages.${system}.default.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ ../../../qt612-f308426.patch ];
+  });
+  noctaliaShellQt612 = inputs.noctalia.packages.${system}.default.override {
+    quickshell = quickshellQt612;
+  };
 in
 {
   options.modules.desktop = {
@@ -13,7 +21,7 @@ in
   config = mkIf cfg.enable {
     # ── 安装 Noctalia 包 + swayidle（空闲锁屏） ──────────────────────
     environment.systemPackages = with pkgs; [
-      inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
+      noctaliaShellQt612
       swayidle # 空闲检测 → 自动锁屏
     ];
 
@@ -22,6 +30,8 @@ in
 
     # ── Home Manager 集成 ────────────────────────────────────────────────
     home-manager.users.${myvars.username} = {
+      programs.noctalia-shell.package = noctaliaShellQt612;
+
       imports = [
         inputs.noctalia.homeModules.default
       ];
