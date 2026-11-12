@@ -31,6 +31,9 @@
     mpv # 视频播放器
     pavucontrol # 音量控制
 
+    # ── 文件传输 ─────────────────────────────────────────────────
+    localsend # 局域网跨设备文件传输（防火墙端口见 networking/localsend.nix）
+
     # ── 文件管理 ─────────────────────────────────────────────────
     thunar # 文件管理器；xfce.thunar 等旧别名已弃用
     thunar-archive-plugin
