@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, myvars, ... }:
 {
   # ── Display Manager（greetd 图形登录） ────────────────────────────
   services.greetd.enable = lib.mkDefault true;
@@ -49,6 +49,36 @@
       qt6Packages.fcitx5-chinese-addons
       fcitx5-material-color
     ];
+  };
+
+  # 输入法组：键盘 + 拼音（Ctrl+Space 切换）。
+  # 安装器默认只生成 keyboard-us，这里用 Home Manager 固化中文输入法。
+  home-manager.users.${myvars.username}.xdg.configFile."fcitx5/profile" = {
+    force = true;
+    text = ''
+      [Groups/0]
+      # Group Name
+      Name=Default
+      # Layout
+      Default Layout=us
+      # Default Input Method
+      DefaultIM=keyboard-us
+
+      [Groups/0/Items/0]
+      # Name
+      Name=keyboard-us
+      # Layout
+      # Layout=
+
+      [Groups/0/Items/1]
+      # Name
+      Name=pinyin
+      # Layout
+      # Layout=
+
+      [GroupOrder]
+      0=Default
+    '';
   };
 
   # ── 音频（PipeWire） ────────────────────────────────────────────────

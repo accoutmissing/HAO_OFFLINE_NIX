@@ -7,9 +7,19 @@ let
   quickshellQt612 = inputs.noctalia.inputs.noctalia-qs.packages.${system}.default.overrideAttrs (old: {
     patches = (old.patches or [ ]) ++ [ ../../../qt612-f308426.patch ];
   });
-  noctaliaShellQt612 = inputs.noctalia.packages.${system}.default.override {
+  # 与运行时验证过的 fork 保持一致：Noctalia 的 `Color` 单例在 Qt 6.12 /
+  # Quickshell 下会与类型解析冲突，统一重命名为 `HaoColor`（含所有引用）。
+  noctaliaShellQt612 = (inputs.noctalia.packages.${system}.default.override {
     quickshell = quickshellQt612;
-  };
+  }).overrideAttrs (old: {
+    installPhase = (old.installPhase or "") + ''
+      shellDir="$out/share/noctalia-shell"
+      mv "$shellDir/Commons/Color.qml" "$shellDir/Commons/HaoColor.qml"
+      find "$shellDir" -type f -name '*.qml' -exec sed -i \
+        -e 's/\bColor\./HaoColor./g' \
+        -e 's/target: Color\b/target: HaoColor/g' {} +
+    '';
+  });
 in
 {
   options.modules.desktop = {
