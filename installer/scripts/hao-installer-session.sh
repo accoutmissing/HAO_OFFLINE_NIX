@@ -10,7 +10,9 @@ rm -f "$gui_dir/installer-status"
 # chance to finish loading the display driver before opening the compositor.
 udevadm settle --timeout=15 || true
 for _ in $(seq 1 50); do
-  compgen -G '/dev/dri/card*' >/dev/null && break
+  for drm_device in /dev/dri/card*; do
+    [[ -c $drm_device ]] && break 2
+  done
   sleep 0.1
 done
 if runuser -u nixos -- env \

@@ -316,10 +316,13 @@ run_phase() {
 }
 
 resolve_parent_disk() {
-  local node="$1" type parent backing source
+  local node="$1" type parent backing source slave depth=0
+  local -a slaves
   node="$(readlink -f "$node" 2>/dev/null || printf '%s' "$node")"
 
   while [[ -b $node ]]; do
+    ((depth+=1))
+    ((depth <= 32)) || return 1
     type="$(lsblk -dnro TYPE "$node" 2>/dev/null || true)"
     if [[ $type == "disk" || $type == "rom" ]]; then
       printf '%s\n' "$node"
@@ -331,6 +334,19 @@ resolve_parent_disk() {
       source="$(findmnt -rn -o MAJ:MIN --target "$backing" 2>/dev/null || true)"
       [[ -e /sys/dev/block/$source ]] || return 1
       node="/dev/$(basename "$(readlink -f "/sys/dev/block/$source")")"
+      continue
+    fi
+    # lsblk -d does not report PKNAME for Ventoy's device-mapper ISO.
+    # Only a single backing device is unambiguous enough to protect.
+    if [[ ${node##*/} == dm-* ]]; then
+      slaves=()
+      for slave in /sys/class/block/"${node##*/}"/slaves/*; do
+        [[ -e $slave ]] && slaves+=("$slave")
+      done
+      ((${#slaves[@]} == 1)) || return 1
+      parent="$(basename "$(readlink -f "${slaves[0]}")")"
+      [[ -n $parent && -b /dev/$parent ]] || return 1
+      node="/dev/$parent"
       continue
     fi
     parent="$(lsblk -dnro PKNAME "$node" 2>/dev/null || true)"
