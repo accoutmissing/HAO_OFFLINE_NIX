@@ -23,6 +23,10 @@
       STOP_CHARGE_THRESH_BAT0 = 80;
       # 插电和电池供电时均禁用 USB 自动挂起，避免外接设备/USB 重定向异常。
       USB_AUTOSUSPEND = 0;
+      # TLP 默认在电池模式下会打开 WiFi 省电，会加剧 9462 的认证超时/固件
+      # 崩溃；与 NetworkManager、iwlwifi 模块参数保持一致，两种供电都关闭。
+      WIFI_PWR_ON_AC = "off";
+      WIFI_PWR_ON_BAT = "off";
     };
   };
 

@@ -1,12 +1,7 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   # 系统级安装的软件包（桌面环境）
   environment.systemPackages = with pkgs; [
-    # Zen 的发行包是 fetchzip 固定输出派生（FOD），构建沙箱内拿不到
-    # nix-daemon 的 http_proxy；纯代理网络下若卡在这里，先手动预取：
-    #   sudo nix-prefetch-url --name source --unpack <url>
-    # URL 与 hash 见 zen-browser-flake 的 sources.json；路径命中后构建会跳过下载。
-    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta
     # ── 社交/通讯 ────────────────────────────────────────────────
     qq # 腾讯 QQ Linux 版
     wechat # 微信 Linux 版
