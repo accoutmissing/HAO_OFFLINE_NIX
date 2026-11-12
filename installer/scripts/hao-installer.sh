@@ -321,7 +321,7 @@ resolve_parent_disk() {
   node="$(readlink -f "$node" 2>/dev/null || printf '%s' "$node")"
 
   while [[ -b $node ]]; do
-    ((depth+=1))
+    ((depth += 1))
     ((depth <= 32)) || return 1
     type="$(lsblk -dnro TYPE "$node" 2>/dev/null || true)"
     if [[ $type == "disk" || $type == "rom" ]]; then
