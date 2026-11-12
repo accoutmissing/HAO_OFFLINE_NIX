@@ -1,7 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   # 系统级安装的软件包（桌面环境）
   environment.systemPackages = with pkgs; [
+    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta
     # ── 社交/通讯 ────────────────────────────────────────────────
     qq # 腾讯 QQ Linux 版
     wechat # 微信 Linux 版
