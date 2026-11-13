@@ -33,6 +33,7 @@ in
     environment.systemPackages = with pkgs; [
       noctaliaShellQt612
       swayidle # 空闲检测 → 自动锁屏
+      tmux # HAO AI 面板的持久会话（收起面板不丢 agent）
     ];
 
     # ── Noctalia 依赖的服务 ─────────────────────────────────────────────
@@ -67,17 +68,8 @@ in
         }
 
         ${lib.optionalString config.modules.desktop.ai-agent.enable ''
+          // AI 工作区保留原名（当前就是主工作区），面板不再固定打开到这里
           workspace "AI" {}
-
-          // 类似 Omarchy 的下拉 Agent：独立工作区、顶部浮动、保留会话
-          window-rule {
-              match app-id=r#"^hao-ai$"#
-              open-on-workspace "AI"
-              open-floating true
-              default-floating-position x=0 y=0 relative-to="top"
-              default-window-height { proportion 0.5; }
-              default-column-width { proportion 0.8; }
-          }
         ''}
 
         // 所有窗口统一 8px 圆角（边框/焦点环同步），并裁剪窗口内容到圆角
@@ -85,6 +77,26 @@ in
             geometry-corner-radius 8
             clip-to-geometry true
         }
+
+        ${lib.optionalString config.modules.desktop.ai-agent.enable ''
+          // HAO AI 面板：右侧悬浮卡片，外观对齐 Noctalia 面板
+          // （Noctalia radiusL = 20、backgroundOpacity = 0.93、默认开启模糊）
+          // 必须放在上面的 8px 通配规则之后：后定义的同名属性才会覆盖先定义的。
+          window-rule {
+              match app-id=r#"^hao-ai$"#
+              open-floating true
+              default-floating-position x=13 y=13 relative-to="top-right"
+              default-column-width { fixed 720; }
+              default-window-height { proportion 0.9; }
+              geometry-corner-radius 20
+              clip-to-geometry true
+              opacity 0.93
+              background-effect { blur true; }
+              focus-ring { off; }
+              border { off; }
+              shadow { off; }
+          }
+        ''}
 
         layout {
             // 焦点环和边框都改为 1px
@@ -110,7 +122,8 @@ in
             Mod+Space hotkey-overlay-title="打开应用启动器" { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
             Mod+Alt+L hotkey-overlay-title="锁屏" { spawn "noctalia-shell" "ipc" "call" "lockScreen" "lock"; }
             ${lib.optionalString config.modules.desktop.ai-agent.enable ''
-              Mod+Shift+Ctrl+A hotkey-overlay-title="AI Agent" { spawn "hao-agent-toggle"; }
+              Mod+grave hotkey-overlay-title="呼出 / 收起 AI Agent" { spawn "hao-agent-toggle"; }
+              Mod+Shift+Ctrl+A hotkey-overlay-title="AI Agent（备用键）" { spawn "hao-agent-toggle"; }
             ''}
 
             // ── 焦点移动 ──
@@ -185,6 +198,20 @@ in
         }
       '';
 
+      # ── HAO AI 面板的 tmux 会话配置 ──────────────────────────────────
+      # 只给 AI 面板用（kitty 启动时通过 -f 指定），不影响普通终端。
+      xdg.configFile."tmux/hao-ai.conf".text = ''
+        # 面板形态：不要底部状态栏，保留鼠标与真彩色
+        set -g status off
+        set -g mouse on
+        set -g escape-time 0
+        set -g focus-events on
+        set -g allow-passthrough on
+        set -g history-limit 10000
+        set -g default-terminal "tmux-256color"
+        set -sg terminal-features ",*:RGB"
+      '';
+
       programs.noctalia-shell = {
         enable = true;
 
@@ -200,6 +227,16 @@ in
               ];
               center = [ ];
               right = [
+                {
+                  # HAO AI 入口：左键呼出/收起，文字显示当前 agent，开启时高亮
+                  id = "CustomButton";
+                  icon = "robot";
+                  leftClickExec = "hao-agent-toggle";
+                  generalTooltipText = "AI Agent（左键呼出 / 收起）";
+                  textCommand = "hao-agent-status";
+                  textIntervalMs = 2000;
+                  parseJson = true;
+                }
                 { id = "Tray"; }
                 { id = "Volume"; }
                 { id = "Brightness"; }
