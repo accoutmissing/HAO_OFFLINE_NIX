@@ -6,13 +6,13 @@
 # 升级：改 version，再执行
 #   nix-prefetch-url https://github.com/can1357/oh-my-pi/releases/download/v<版本>/omp-linux-x64
 # 把新的 sha256 填到 hash（或先 nix build 看报错里的 hash）。
-{
-  lib,
-  stdenv,
-  fetchurl,
-  autoPatchelfHook,
-  libgcc,
-  zlib,
+{ lib
+, stdenv
+, fetchurl
+, autoPatchelfHook
+, libgcc
+, zlib
+,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
