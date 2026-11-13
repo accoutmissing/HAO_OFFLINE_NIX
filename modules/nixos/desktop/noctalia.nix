@@ -52,6 +52,10 @@ in
         size = 15;
       };
       settings = {
+        # 单用户 + 唯一 Niri 会话：跳过用户名/会话选择，只留密码框。
+        # ReGreet 会沿用 /var/lib/regreet/state.toml 里记录的 admin/Niri。
+        skip_selection = true;
+
         background = {
           path = "${noctaliaShellQt612}/share/noctalia-shell/Assets/Wallpaper/noctalia.png";
           fit = "Cover";
