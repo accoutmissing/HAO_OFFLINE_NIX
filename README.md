@@ -21,7 +21,7 @@
 | 🔒 安全 | SSH 禁密码 + root 锁定 + root-only 运行时 secrets（不进 Git / Nix store） |
 | 🔄 系统 | Btrfs + zstd 压缩 + zram + 每周自动 GC |
 | 🇨🇳 国内优化 | 清华/中科大镜像 + 超时优化 |
-| 🔧 CI | GitHub Actions `nix flake check` + 三主机 + 安装 ISO 的 eval + Release ISO 构建 |
+| 🔧 CI | GitHub Actions：格式/脚本/求值等快速检查始终运行；安装器 VM 测试仅安装器相关改动触发 |
 
 每周 `update-flake-lock` 会创建 PR；仓库所有者需在 GitHub 的
 `Settings → Actions → General → Workflow permissions` 启用
@@ -106,6 +106,29 @@ sudo nixos-rebuild switch --rollback
 # 清理旧版本
 sudo nix-collect-garbage --delete-older-than 7d
 ```
+
+## 🧪 开发与 CI
+
+改完配置后，本地验证优先于 CI：
+
+```bash
+cd /etc/nixos
+sudo nix fmt       # treefmt：nixpkgs-fmt / deadnix / statix / shellcheck / shfmt
+sudo nix flake check   # 完整检查（本机有 KVM，比共享 runner 稳定）
+sudo nixos-rebuild build --flake .#HAO_OFFLINE  # 真实构建，确认可切换
+```
+
+CI 分三层，避免基础设施抖动阻塞日常改动：
+
+| Job | 触发条件 | 内容 |
+|---|---|---|
+| `changes` | 始终 | 根据 diff 判断是否触及安装器相关路径 |
+| `check` | 始终 | formatting、installer 脚本测试、三主机 + 三个 ISO 求值、NVIDIA 模块构建 |
+| `installer-vm` | 仅安装器相关改动 | 完整安装流程 VM 测试；失败自动重试一次 |
+
+触发 VM 测试的路径：`installer/**`、`tests/**`、`hosts/**`、`modules/nixos/base/**`、`vars/**`、`flake.nix`、`flake.lock`。只改桌面模块（`modules/nixos/desktop/**`）不会触发 VM 测试。
+
+CI 不是权威判据：VM 测试在无 KVM 的共享 runner 上依赖 QEMU 时序，偶发被 `SIGKILL`。看到红灯先看失败步骤——`formatting` 或求值失败必须修，`installer-vm` 的偶发失败可以重跑。最终以本机能 `nixos-rebuild build/switch`、正常运行且可回滚为准。
 
 ## 🎮 游戏与 Windows VM
 
