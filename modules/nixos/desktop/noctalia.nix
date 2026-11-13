@@ -152,7 +152,9 @@ in
       # ⚠／存在用户配置时 niri 不会合并默认键位，必须自带完整键位：
       # 终端/关窗/焦点/工作区/退出缺一不可，否则登录后无法操作
       xdg.configFile."niri/config.kdl".text = ''
-        spawn-at-startup "noctalia-shell"
+        // 等网络可用再启动：Noctalia 的天气请求在开机网络未就绪时会永久挂起
+        // 且不再重试，导致天气组件空白，直到手动重启 shell。
+        spawn-at-startup "sh" "-c" "for i in $(seq 1 30); do getent hosts api.open-meteo.com >/dev/null 2>&1 && break; sleep 1; done; exec noctalia-shell"
         spawn-at-startup "swayidle" "-w" "timeout" "300" "noctalia-shell ipc call lockScreen lock" "before-sleep" "noctalia-shell ipc call lockScreen lock"
 
         prefer-no-csd
