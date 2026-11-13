@@ -20,6 +20,42 @@ on:
         default: ""
 
 jobs:
+  # 判断本次改动是否触及安装器相关路径。VM 测试依赖 QEMU 时序，
+  # 在无 KVM 的共享 runner 上偶发被静默杀掉，因此只在相关改动时才跑，
+  # 避免日常桌面改动被基础设施抖动卡住。
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      installer: ${{ steps.filter.outputs.installer }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - id: filter
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=""
+          case "${{ github.event_name }}" in
+            pull_request) base="${{ github.event.pull_request.base.sha }}" ;;
+            push) base="${{ github.event.before }}" ;;
+          esac
+          # 无法确定基线（workflow_call、新分支、force-push）时按“相关”处理。
+          if [[ -z ${base} ]] || ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            echo "installer=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "${base}" HEAD)"
+          printf '%s\n' "${changed}" | sed '/^$/d' | head -50
+          if printf '%s\n' "${changed}" | grep -Eq '^(installer/|tests/|hosts/|modules/nixos/base/|vars/|flake\.nix$|flake\.lock$)'; then
+            echo "installer=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "installer=false" >>"$GITHUB_OUTPUT"
+          fi
+
+  # 快速、确定性的检查：始终运行并作为合并门槛。
   check:
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +68,14 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       # 禁止 CI 临时补写锁文件；flake.nix 新增输入后必须同步提交 flake.lock。
-      - run: nix flake check --no-write-lock-file
+      # 这里逐个构建快速检查，不再用 `nix flake check`（它会把 VM 测试一起拉起来）。
+      - name: Fast checks (formatting, scripts, desktop support)
+        run: >-
+          nix build --no-link --no-write-lock-file
+          .#checks.x86_64-linux.formatting
+          .#checks.x86_64-linux.desktop-support
+          .#checks.x86_64-linux.installer-failure-handling
+          .#checks.x86_64-linux.installer-downloads
 
       # 验证三台主机的系统闭包能完整求值（只 eval 不构建，比 nix build 轻）
       # 两台主机的硬件配置均在仓库中，安装和远程重建使用相同来源。
@@ -48,3 +91,27 @@ jobs:
 
       # GTX 1060 uses the legacy branch; validate it against the locked kernel.
       - run: nix build --no-link --no-write-lock-file .#nixosConfigurations.HAO_OFFLINE.config.hardware.nvidia.package.mod
+
+  # 安装器 VM 测试：只验证安装流程（分区、复制配置、密码/权限、缓存选择、
+  # 中文 UI），与日常桌面改动无关。仅在 installer/tests/hosts/base 等改动时运行；
+  # QEMU 在共享 runner 上偶发被 signal 9 杀掉，失败自动重试一次再判定。
+  installer-vm:
+    needs: changes
+    if: needs.changes.outputs.installer == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Installer VM test
+        shell: bash
+        run: |
+          set -euo pipefail
+          nix build --no-link --no-write-lock-file .#checks.x86_64-linux.installer-vm ||
+            { echo "VM test failed once (QEMU may have been killed); retrying..."; \
+              nix build --no-link --no-write-lock-file .#checks.x86_64-linux.installer-vm; }
