@@ -3,6 +3,14 @@ _:
   # 网络管理（桌面环境用 NetworkManager）
   networking.networkmanager.enable = true;
 
+  # DHCP 下发的 10.198.1.1 偶发失效时，所有 HTTPS 都会在解析阶段超时
+  # （curl/git 报 "Resolving timed out"）。由 NM 统一插入公共 DNS，
+  # 放在 DHCP 下发的服务器之前，避免再次被上游 DNS 拖死。
+  networking.networkmanager.insertNameservers = [
+    "223.5.5.5"
+    "119.29.29.29"
+  ];
+
   # ── Intel Wireless-AC 9462 (CNVi) 稳定性 ───────────────────────────
   # 该卡会在省电状态切换/漫游时反复出现 802.11 认证超时，严重时 iwlwifi
   # 固件 ADVANCED_SYSASSERT / NMI_INTERRUPT_LMAC_FATAL 崩溃（wlo1 直接
