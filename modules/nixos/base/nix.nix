@@ -23,20 +23,16 @@
       connect-timeout = 10;
     };
 
-    # 自动 GC（每周清理 7 天前的旧版本）
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 7d";
-    };
+    # 不再按时间自动 GC：旧代由下方的容量触发服务统一管理，
+    # 避免“7 天前”规则在容量仍有富余时提前删掉可回滚的版本。
   };
 
-  # ── 自动清理旧系统代 ────────────────────────────────────────────────
-  # 频繁 rebuild 会在同一天留下大量 generation；`nix.gc` 只按“7 天前”删除，
-  # 对当天的迭代无能为力。这里每天保留最新 5 代 + 最初安装代，其余删除，
-  # 然后回收死路径；检测到 Nix 构建进行中则跳过，避免与重建竞争。
+  # ── 按容量自动清理系统代 ────────────────────────────────────────────
+  # 策略：/nix/store 未超过 50 GiB 时保留全部 generation（回滚深度优先）；
+  # 超过后从最旧的 generation 开始删除并回收 dead paths，直到回到 50 GiB
+  # 以内；始终保留当前代和上一代，且检测到 Nix 构建进行中时跳过。
   systemd.services.nixos-generation-prune = {
-    description = "Prune old NixOS generations and collect garbage";
+    description = "Prune old NixOS generations when the store exceeds 50 GiB";
     path = with pkgs; [ nix coreutils procps gawk ];
     serviceConfig = {
       Type = "oneshot";
@@ -46,30 +42,45 @@
     script = ''
       set -euo pipefail
       profile=/nix/var/nix/profiles/system
+      limit=$((50 * 1024 * 1024 * 1024))
+      store_size() { du -s --block-size=1 /nix/store | cut -f1; }
+
       if pgrep -x nix >/dev/null || pgrep -f 'nixos-rebuild' >/dev/null; then
         echo "Nix build in progress; skipping prune"
         exit 0
       fi
-      mapfile -t gens < <(nix-env -p "$profile" --list-generations | awk '$1 ~ /^[0-9]+$/ { print $1+0 }')
-      count=''${#gens[@]}
-      keep=5
-      if (( count > keep + 1 )); then
-        delete=("''${gens[@]:1:count-keep-1}")
-        echo "Deleting generations: ''${delete[*]}"
-        nix-env -p "$profile" --delete-generations "''${delete[@]}"
-      else
-        echo "Only $count generations; nothing to prune"
+
+      size=$(store_size)
+      echo "Current /nix/store usage: $size bytes (limit $limit)"
+      if (( size <= limit )); then
+        echo "Under limit; keeping all generations"
+        exit 0
       fi
-      nix-collect-garbage >/dev/null
+
+      mapfile -t gens < <(nix-env -p "$profile" --list-generations | awk '$1 ~ /^[0-9]+$/ { print $1+0 }')
+      while (( size > limit && ''${#gens[@]} > 2 )); do
+        oldest=''${gens[0]}
+        echo "Deleting generation $oldest to free space"
+        nix-env -p "$profile" --delete-generations "$oldest"
+        nix-collect-garbage >/dev/null
+        gens=("''${gens[@]:1}")
+        size=$(store_size)
+        echo "Store usage now: $size bytes"
+      done
+
+      if (( size > limit )); then
+        echo "WARNING: still above limit with only ''${#gens[@]} generations; keeping current + previous for rollback"
+      fi
     '';
   };
 
   systemd.timers.nixos-generation-prune = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnCalendar = "daily";
+      OnStartupSec = "3min";
+      OnUnitActiveSec = "1h";
       Persistent = true;
-      RandomizedDelaySec = "30m";
+      RandomizedDelaySec = "5m";
     };
   };
 
