@@ -1,11 +1,11 @@
-{
-  lib,
-  rustPlatform,
-  fetchFromGitHub,
-  meta,
-  mihomo,
-  procps,
-  replaceVars,
+{ lib
+, rustPlatform
+, fetchFromGitHub
+, meta
+, mihomo
+, procps
+, replaceVars
+,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {

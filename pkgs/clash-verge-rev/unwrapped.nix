@@ -1,32 +1,29 @@
-{
-  pname,
-  version,
-  src,
-  cargoPatches,
-  meta,
-
-  pnpm-hash,
-  vendor-hash,
-
-  rustPlatform,
-  cargo-tauri,
-  autoPatchelfHook,
-  jq,
-  moreutils,
-  nodejs,
-  pkg-config,
-  pnpm_12,
-  fetchPnpmDeps,
-  pnpmConfigHook,
-  stdenv,
-
-  aws-lc,
-  glib,
-  kdePackages,
-  libayatana-appindicator,
-  libsoup_3,
-  openssl,
-  webkitgtk_4_1,
+{ pname
+, version
+, src
+, cargoPatches
+, meta
+, pnpm-hash
+, vendor-hash
+, rustPlatform
+, cargo-tauri
+, autoPatchelfHook
+, jq
+, moreutils
+, nodejs
+, pkg-config
+, pnpm_12
+, fetchPnpmDeps
+, pnpmConfigHook
+, stdenv
+, aws-lc
+, glib
+, kdePackages
+, libayatana-appindicator
+, libsoup_3
+, openssl
+, webkitgtk_4_1
+,
 }:
 rustPlatform.buildRustPackage {
   inherit
