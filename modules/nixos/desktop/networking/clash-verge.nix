@@ -1,5 +1,13 @@
 { pkgs, ... }:
 {
+  # 2.5.10 的打包来自 nixpkgs PR #567454（开放中，尚未进入 unstable）。
+  # nixpkgs 合并该 PR 后，删除本 overlay 与 pkgs/clash-verge-rev/ 即可。
+  nixpkgs.overlays = [
+    (final: _prev: {
+      clash-verge-rev = final.callPackage ../../../../pkgs/clash-verge-rev/package.nix { };
+    })
+  ];
+
   # Clash Verge Rev（mihomo GUI 客户端）
   # mihomo（原 clash-meta）为核心，clash-verge-rev 为图形界面
   environment.systemPackages = with pkgs; [
