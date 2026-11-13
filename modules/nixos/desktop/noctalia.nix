@@ -108,6 +108,18 @@ in
             }
         }
 
+        // 打开/关闭动画对齐 Noctalia 面板的节奏（全局生效）
+        animations {
+            window-open {
+                duration-ms 220
+                curve "cubic-bezier" 0.05 0.7 0.1 1
+            }
+            window-close {
+                duration-ms 150
+                curve "ease-out-quad"
+            }
+        }
+
         // hotkey-overlay-title 决定快捷键提示浮层里显示的文字；
         // 未自定义时 niri 会用英文动作名，这里统一改成中文。
         binds {
