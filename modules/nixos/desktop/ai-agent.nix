@@ -5,13 +5,17 @@ let
 
   scriptBody = path: removePrefix "#!/usr/bin/env bash\n" (builtins.readFile path);
 
+  # omp 使用官方预编译二进制（见 pkgs/omp/default.nix），避免本地编译整套 Rust/bun
+  omp = pkgs.callPackage ../../../pkgs/omp { };
+
   haoAgent = pkgs.writeShellApplication {
     name = "hao-agent";
-    runtimeInputs = with pkgs; [
-      codex
-      coreutils
-      fuzzel
-      opencode
+    runtimeInputs = [
+      omp
+      pkgs.codex
+      pkgs.coreutils
+      pkgs.fuzzel
+      pkgs.opencode
     ];
     text = scriptBody ../../../scripts/hao-agent.sh;
   };
@@ -40,13 +44,14 @@ let
 in
 {
   options.modules.desktop.ai-agent.enable =
-    mkEnableOption "原生 AI Agent 入口（Codex、OpenCode）";
+    mkEnableOption "原生 AI Agent 入口（Codex、OpenCode、OMP）";
 
   config = mkIf cfg.enable {
     environment.systemPackages = [
       haoAgent
       haoAgentToggle
       haoAgentStatus
+      omp
       pkgs.codex
       pkgs.opencode
     ];

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly supported_agents=(codex opencode)
+readonly supported_agents=(codex opencode omp)
 readonly config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}/hao-ai"
 readonly default_file="${config_dir}/default-agent"
 
@@ -16,7 +16,7 @@ usage() {
   hao-agent --list          列出可用 Agent
   hao-agent [Agent 参数...] 将参数传给默认 Agent
 
-支持的 Agent：codex、opencode
+支持的 Agent：codex、opencode、omp
 EOF
 }
 

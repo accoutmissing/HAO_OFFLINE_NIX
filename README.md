@@ -12,7 +12,7 @@
 | 🔤 中文输入 | Fcitx5 + Rime |
 | 🎨 设计 | GIMP / Inkscape / Krita / Blender 全套 |
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
-| 🤖 原生 AI | Codex / OpenCode，快捷呼出并保留终端会话 |
+| 🤖 原生 AI | Codex / OpenCode / OMP，快捷呼出并保留终端会话 |
 | 🎮 游戏 | Steam + Lutris + GameMode + MangoHud + Gamescope |
 | 💬 通讯 | QQ / 微信（Linux 原生） |
 | 🖥️ Windows 应用 | KVM/QEMU Windows VM（virt-manager / quickemu，swtpm + OVMF） |
@@ -157,17 +157,19 @@ CI 不是权威判据：VM 测试在无 KVM 的共享 runner 上依赖 QEMU 时�
 
 - 按 `Win + Shift + Ctrl + A` 呼出或隐藏顶部浮动的 Agent 窗口；再次打开会保留之前的会话。
 - 按 `Win + 空格` 搜索 **HAO AI** 也可以启动。
-- 默认使用 Codex；运行 `ai-pick` 可临时选择 Codex 或 OpenCode。
-- 运行 `hao-agent --set opencode` 可修改默认 Agent，支持值为 `codex`、`opencode`。
+- 默认使用 Codex；运行 `ai-pick` 可临时选择 Codex、OpenCode 或 OMP。
+- 运行 `hao-agent --set opencode` 可修改默认 Agent，支持值为 `codex`、`opencode`、`omp`。
 
 第一次使用某个 Agent 时，在终端完成它自己的登录：
 
 ```bash
 codex login
+omp   # 启动后输入 /login 登录
 opencode auth login
 ```
 
 登录凭据由各 CLI 保存在当前用户目录中，不会写入 Git 仓库或 Nix Store。Agent 仍保留正常的命令确认流程，不会默认获得免确认执行权限。
+`omp` 使用官方预编译二进制（版本固定在 `pkgs/omp/default.nix`，不会自我更新）；升级时改该文件的 `version` 和 `hash` 后重新构建即可。
 `admin` 同时被授权进行免密远程系统调试；该账户及其 SSH 密钥应按 root 权限保护。
 
 ## 📚 相关链接
