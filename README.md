@@ -12,7 +12,7 @@
 | 🔤 中文输入 | Fcitx5 + Rime |
 | 🎨 设计 | GIMP / Inkscape / Krita / Blender 全套 |
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
-| 🤖 原生 AI | Codex / Claude Code / OpenCode，快捷呼出并保留终端会话 |
+| 🤖 原生 AI | Codex / OpenCode，快捷呼出并保留终端会话 |
 | 🎮 游戏 | Steam + Lutris + GameMode + MangoHud + Gamescope |
 | 💬 通讯 | QQ / 微信（Linux 原生） |
 | 🖥️ Windows 应用 | KVM/QEMU Windows VM（virt-manager / quickemu，swtpm + OVMF） |
@@ -157,14 +157,13 @@ CI 不是权威判据：VM 测试在无 KVM 的共享 runner 上依赖 QEMU 时�
 
 - 按 `Win + Shift + Ctrl + A` 呼出或隐藏顶部浮动的 Agent 窗口；再次打开会保留之前的会话。
 - 按 `Win + 空格` 搜索 **HAO AI** 也可以启动。
-- 默认使用 Codex；运行 `ai-pick` 可临时选择 Codex、Claude Code 或 OpenCode。
-- 运行 `hao-agent --set claude` 可修改默认 Agent，支持值为 `codex`、`claude`、`opencode`。
+- 默认使用 Codex；运行 `ai-pick` 可临时选择 Codex 或 OpenCode。
+- 运行 `hao-agent --set opencode` 可修改默认 Agent，支持值为 `codex`、`opencode`。
 
 第一次使用某个 Agent 时，在终端完成它自己的登录：
 
 ```bash
 codex login
-claude # 首次启动时按提示登录
 opencode auth login
 ```
 

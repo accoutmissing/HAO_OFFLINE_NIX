@@ -570,11 +570,10 @@ cd /etc/nixos
 
 ```bash
 codex login
-claude # 首次启动时按提示登录
 opencode auth login
 ```
 
-系统默认打开 Codex。运行 `ai-pick` 可以临时选择其他 Agent；运行 `hao-agent --set claude` 可以把 Claude Code 设为默认。登录凭据只保存在当前用户目录，不会进入公开仓库。
+系统默认打开 Codex。运行 `ai-pick` 可以临时选择其他 Agent；运行 `hao-agent --set opencode` 可以把 OpenCode 设为默认。登录凭据只保存在当前用户目录，不会进入公开仓库。
 
 ### 更新系统
 

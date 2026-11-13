@@ -8,7 +8,6 @@ let
   haoAgent = pkgs.writeShellApplication {
     name = "hao-agent";
     runtimeInputs = with pkgs; [
-      claude-code
       codex
       coreutils
       fuzzel
@@ -41,14 +40,13 @@ let
 in
 {
   options.modules.desktop.ai-agent.enable =
-    mkEnableOption "原生 AI Agent 入口（Codex、Claude Code、OpenCode）";
+    mkEnableOption "原生 AI Agent 入口（Codex、OpenCode）";
 
   config = mkIf cfg.enable {
     environment.systemPackages = [
       haoAgent
       haoAgentToggle
       haoAgentStatus
-      pkgs.claude-code
       pkgs.codex
       pkgs.opencode
     ];

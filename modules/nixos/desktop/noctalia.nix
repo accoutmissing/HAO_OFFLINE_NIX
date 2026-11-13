@@ -22,9 +22,10 @@ let
   });
   # 登录页背景：与 Noctalia 壁纸同源，构建时预模糊并轻微压暗，
   # 让 ReGreet 的半透明卡片更清晰（GTK 本身不支持实时背景模糊）。
-  greeterWallpaper = pkgs.runCommand "noctalia-greeter-wallpaper.png" {
-    nativeBuildInputs = [ pkgs.imagemagick ];
-  } ''
+  greeterWallpaper = pkgs.runCommand "noctalia-greeter-wallpaper.png"
+    {
+      nativeBuildInputs = [ pkgs.imagemagick ];
+    } ''
     magick ${noctaliaShellQt612}/share/noctalia-shell/Assets/Wallpaper/noctalia.png \
       -resize 2560x1440^ -gravity center -extent 2560x1440 \
       -blur 0x28 -brightness-contrast -8x0 "$out"
