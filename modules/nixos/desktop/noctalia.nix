@@ -75,6 +75,11 @@ in
 
         label { color: rgba(243, 237, 247, 0.92); }
 
+        /* 按钮内的 label 会覆盖按钮 color，这里按按钮类型单独指定 */
+        button label { color: #f3edf7; }
+        button.suggested-action label { color: #0e0e43; }
+        button.destructive-action label { color: #fd4663; }
+
         entry, passwordentry {
           background-color: rgba(17, 17, 45, 0.55);
           border: 1px solid rgba(33, 33, 95, 0.80);
