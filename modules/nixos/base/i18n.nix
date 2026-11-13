@@ -1,7 +1,8 @@
 {
   time.timeZone = "Asia/Shanghai";
 
-  i18n.defaultLocale = "en_US.UTF-8";
+  # 系统语言：中文（地区/时间/数字格式同样为 zh_CN）
+  i18n.defaultLocale = "zh_CN.UTF-8";
 
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "zh_CN.UTF-8";

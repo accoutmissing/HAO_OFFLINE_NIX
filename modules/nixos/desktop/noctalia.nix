@@ -358,6 +358,8 @@ in
 
           general = {
             lockOnSuspend = true;
+            # 桌面壳层界面语言（Noctalia 支持 zh-CN）
+            language = "zh-CN";
           };
 
           colorSchemes = {
