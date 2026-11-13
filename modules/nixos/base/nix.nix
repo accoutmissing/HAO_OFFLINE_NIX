@@ -1,4 +1,4 @@
-{ myvars, ... }:
+{ myvars, pkgs, ... }:
 {
   # ── 许可：允许 unfree 包（NVIDIA 驱动 / Steam / Proton / Wine） ──
   nixpkgs.config.allowUnfree = true;
@@ -28,6 +28,48 @@
       automatic = true;
       dates = "weekly";
       options = "--delete-older-than 7d";
+    };
+  };
+
+  # ── 自动清理旧系统代 ────────────────────────────────────────────────
+  # 频繁 rebuild 会在同一天留下大量 generation；`nix.gc` 只按“7 天前”删除，
+  # 对当天的迭代无能为力。这里每天保留最新 5 代 + 最初安装代，其余删除，
+  # 然后回收死路径；检测到 Nix 构建进行中则跳过，避免与重建竞争。
+  systemd.services.nixos-generation-prune = {
+    description = "Prune old NixOS generations and collect garbage";
+    path = with pkgs; [ nix coreutils procps gawk ];
+    serviceConfig = {
+      Type = "oneshot";
+      Nice = 19;
+      IOSchedulingClass = "idle";
+    };
+    script = ''
+      set -euo pipefail
+      profile=/nix/var/nix/profiles/system
+      if pgrep -x nix >/dev/null || pgrep -f 'nixos-rebuild' >/dev/null; then
+        echo "Nix build in progress; skipping prune"
+        exit 0
+      fi
+      mapfile -t gens < <(nix-env -p "$profile" --list-generations | awk '$1 ~ /^[0-9]+$/ { print $1+0 }')
+      count=''${#gens[@]}
+      keep=5
+      if (( count > keep + 1 )); then
+        delete=("''${gens[@]:1:count-keep-1}")
+        echo "Deleting generations: ''${delete[*]}"
+        nix-env -p "$profile" --delete-generations "''${delete[@]}"
+      else
+        echo "Only $count generations; nothing to prune"
+      fi
+      nix-collect-garbage >/dev/null
+    '';
+  };
+
+  systemd.timers.nixos-generation-prune = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+      RandomizedDelaySec = "30m";
     };
   };
 

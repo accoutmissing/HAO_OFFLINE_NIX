@@ -105,6 +105,8 @@ sudo nixos-rebuild switch --rollback
 
 # 清理旧版本
 sudo nix-collect-garbage --delete-older-than 7d
+# 系统代每天自动清理：保留最新 5 代 + 最初安装代，其余回收
+systemctl status nixos-generation-prune.timer
 ```
 
 ## 🧪 开发与 CI
