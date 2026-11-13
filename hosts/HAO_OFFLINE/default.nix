@@ -8,6 +8,8 @@
     ]
     # 本地未跟踪覆盖（hosts/<host>/local.nix，被 .gitignore 忽略）。
     # 用于只对这台机器生效、但不希望进仓库的调整（例如损坏硬件的规避）。
+    # 注意：git 模式的 flake 不包含未跟踪文件，启用 local.nix 后重建请用
+    # `--flake path:/etc/nixos#<主机>`，否则它会被静默忽略。
     ++ lib.optional (builtins.pathExists ./local.nix) ./local.nix;
 
   # ── 主机身份 ────────────────────────────────────────────────────────

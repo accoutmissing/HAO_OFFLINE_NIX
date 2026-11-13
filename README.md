@@ -128,6 +128,14 @@ CI 分三层，避免基础设施抖动阻塞日常改动：
 
 触发 VM 测试的路径：`installer/**`、`tests/**`、`hosts/**`、`modules/nixos/base/**`、`vars/**`、`flake.nix`、`flake.lock`。只改桌面模块（`modules/nixos/desktop/**`）不会触发 VM 测试。
 
+**本地覆盖**：`hosts/<host>/local.nix` 被 `.gitignore` 忽略，不会进入仓库。git 模式的 flake 不打包未跟踪文件，所以启用本地覆盖后请用 `path:` 重建：
+
+```bash
+sudo nixos-rebuild switch --flake path:/etc/nixos#HAO_OFFLINE
+```
+
+CI 使用 git 检出，天然不包含 `local.nix`，这就是“特例不进仓库”的保证。
+
 CI 不是权威判据：VM 测试在无 KVM 的共享 runner 上依赖 QEMU 时序，偶发被 `SIGKILL`。看到红灯先看失败步骤——`formatting` 或求值失败必须修，`installer-vm` 的偶发失败可以重跑。最终以本机能 `nixos-rebuild build/switch`、正常运行且可回滚为准。
 
 ## 🎮 游戏与 Windows VM
