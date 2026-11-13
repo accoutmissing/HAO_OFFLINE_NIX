@@ -8,6 +8,7 @@
     vim
     htop
     btop
+    fastfetch # 系统信息概览
     tree
     unzip
     zip

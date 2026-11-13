@@ -24,8 +24,19 @@ let
       jq
       kitty
       niri
+      tmux
     ];
     text = scriptBody ../../../scripts/hao-agent-toggle.sh;
+  };
+
+  haoAgentStatus = pkgs.writeShellApplication {
+    name = "hao-agent-status";
+    runtimeInputs = with pkgs; [
+      haoAgent
+      jq
+      niri
+    ];
+    text = scriptBody ../../../scripts/hao-agent-status;
   };
 in
 {
@@ -36,6 +47,7 @@ in
     environment.systemPackages = [
       haoAgent
       haoAgentToggle
+      haoAgentStatus
       pkgs.claude-code
       pkgs.codex
       pkgs.opencode

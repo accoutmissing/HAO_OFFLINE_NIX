@@ -34,14 +34,14 @@ is_supported() {
 }
 
 read_default() {
-  local configured="codex"
+  local configured="opencode"
 
   if [[ -r ${default_file} ]]; then
     IFS= read -r configured <"${default_file}" || true
   fi
 
   if ! is_supported "${configured}"; then
-    configured="codex"
+    configured="opencode"
   fi
 
   printf '%s\n' "${configured}"

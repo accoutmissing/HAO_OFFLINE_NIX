@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Bar 上的 HAO AI 状态：显示当前默认 agent，面板打开时高亮。
+agent="$(hao-agent --current 2>/dev/null || printf 'AI')"
+icon_color="none"
+
+if [[ -n ${NIRI_SOCKET:-} ]]; then
+  windows_json="$(niri msg --json windows 2>/dev/null || printf '[]\n')"
+  if jq -e 'any(.[]; .app_id == "hao-ai")' <<<"${windows_json}" >/dev/null 2>&1; then
+    icon_color="primary"
+  fi
+fi
+
+jq -cn --arg text "${agent}" --arg iconColor "${icon_color}" \
+  '{text: $text, icon: "robot", iconColor: $iconColor, tooltip: "HAO AI"}'

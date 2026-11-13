@@ -30,4 +30,19 @@
       options = "--delete-older-than 7d";
     };
   };
+
+  # ── Nix daemon 代理 ────────────────────────────────────────────────
+  # TUNA/USTC 镜像直连；回退到 cache.nixos.org、cachix 或 GitHub 时走本地
+  # Clash Verge（mixed-port 7897），否则国际链路实测只有 20–30 KB/s。
+  # 注意：Clash 未运行时 Nix 下载会直接失败（没有直连回退）。
+  systemd.services.nix-daemon.environment = {
+    http_proxy = "http://127.0.0.1:7897";
+    https_proxy = "http://127.0.0.1:7897";
+    all_proxy = "http://127.0.0.1:7897";
+    HTTP_PROXY = "http://127.0.0.1:7897";
+    HTTPS_PROXY = "http://127.0.0.1:7897";
+    ALL_PROXY = "http://127.0.0.1:7897";
+    no_proxy = "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,mirrors.tuna.tsinghua.edu.cn,mirrors.ustc.edu.cn";
+    NO_PROXY = "localhost,127.0.0.1,::1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,mirrors.tuna.tsinghua.edu.cn,mirrors.ustc.edu.cn";
+  };
 }
