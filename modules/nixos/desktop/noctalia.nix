@@ -39,6 +39,89 @@ in
     # ── Noctalia 依赖的服务 ─────────────────────────────────────────────
     services.upower.enable = true;
 
+    # ── 登录界面（ReGreet）对齐 Noctalia 锁屏 ──────────────────────────
+    # 背景复用 Noctalia 的壁纸；配色/圆角取自 Noctalia 默认方案
+    # （mSurface/mPrimary/mOutline），让登录页与锁屏观感一致。
+    services.displayManager.regreet = {
+      theme = {
+        name = "adw-gtk3-dark";
+        package = pkgs.adw-gtk3;
+      };
+      font = {
+        name = "Noto Sans CJK SC";
+        size = 15;
+      };
+      settings = {
+        background = {
+          path = "${noctaliaShellQt612}/share/noctalia-shell/Assets/Wallpaper/noctalia.png";
+          fit = "Cover";
+        };
+        GTK.application_prefer_dark_theme = true;
+      };
+      extraCss = ''
+        /* Noctalia 锁屏配色：surface #070722 / primary #fff59b / outline #21215F */
+        window { background-color: #070722; }
+
+        frame.background, frame.background > border {
+          background-color: rgba(7, 7, 34, 0.74);
+          border: 1px solid rgba(33, 33, 95, 0.85);
+          border-radius: 20px;
+          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+        }
+
+        label { color: rgba(243, 237, 247, 0.92); }
+
+        entry, passwordentry {
+          background-color: rgba(17, 17, 45, 0.55);
+          border: 1px solid rgba(33, 33, 95, 0.80);
+          border-radius: 12px;
+          min-height: 40px;
+          padding: 8px 14px;
+          color: #f3edf7;
+          caret-color: #fff59b;
+        }
+        entry:focus-within, passwordentry:focus-within {
+          border: 2px solid #fff59b;
+          box-shadow: 0 0 0 1px rgba(255, 245, 155, 0.30);
+        }
+        entry selection, passwordentry selection {
+          background-color: #fff59b;
+          color: #0e0e43;
+        }
+
+        button, comboboxtext button, button.toggle {
+          background-color: rgba(17, 17, 45, 0.55);
+          border: 1px solid rgba(33, 33, 95, 0.80);
+          border-radius: 12px;
+          min-height: 40px;
+          padding: 8px 18px;
+          color: #f3edf7;
+        }
+        button:hover, comboboxtext button:hover, button.toggle:hover {
+          background-color: rgba(155, 254, 206, 0.12);
+          border-color: rgba(155, 254, 206, 0.40);
+        }
+        button.suggested-action {
+          background-color: #fff59b;
+          border-color: #fff59b;
+          color: #0e0e43;
+          font-weight: 700;
+        }
+        button.suggested-action:hover {
+          background-color: #fffa9f;
+        }
+        button.destructive-action {
+          background-color: rgba(253, 70, 99, 0.14);
+          border-color: rgba(253, 70, 99, 0.55);
+          color: #fd4663;
+        }
+        button.destructive-action:hover {
+          background-color: rgba(253, 70, 99, 0.24);
+        }
+      '';
+    };
+
+
     # ── Home Manager 集成 ────────────────────────────────────────────────
     home-manager.users.${myvars.username} = {
       programs.noctalia-shell.package = noctaliaShellQt612;
