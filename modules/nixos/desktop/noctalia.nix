@@ -80,6 +80,22 @@ in
           }
         ''}
 
+        // 所有窗口统一 8px 圆角（边框/焦点环同步），并裁剪窗口内容到圆角
+        window-rule {
+            geometry-corner-radius 8
+            clip-to-geometry true
+        }
+
+        layout {
+            // 焦点环和边框都改为 1px
+            focus-ring {
+                width 1
+            }
+            border {
+                width 1
+            }
+        }
+
         // hotkey-overlay-title 决定快捷键提示浮层里显示的文字；
         // 未自定义时 niri 会用英文动作名，这里统一改成中文。
         binds {
