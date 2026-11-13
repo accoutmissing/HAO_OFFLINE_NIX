@@ -261,6 +261,15 @@ in
             predefinedScheme = "Noctalia (default)";
           };
 
+          # GTK 应用（Thunar 等）跟随全局主题：生成 ~/.config/gtk-{3,4}.0/noctalia.css，
+          # 并通过 dconf 同步 gtk-theme = adw-gtk3[-dark] 与 color-scheme。
+          templates.activeTemplates = [
+            {
+              id = "gtk";
+              enabled = true;
+            }
+          ];
+
           wallpaper = {
             enabled = true;
             fillMode = "crop";
