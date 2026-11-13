@@ -18,3 +18,6 @@ vars/secrets.nix
 
 # HAO_OFFLINE 的硬件配置已去敏并纳入版本控制，保证远程 Flake 重建可用。
 hosts/HAO_HYPERV/hardware-configuration.nix
+
+# Local, machine-specific overrides (not synced)
+hosts/*/local.nix
