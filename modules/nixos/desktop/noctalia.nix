@@ -171,6 +171,14 @@ in
             }
         }
 
+        // 光标：与 Home Manager 的 home.pointerCursor 保持一致
+        cursor {
+            xcursor-theme "Bibata-Modern-Ice"
+            xcursor-size 24
+            hide-when-typing
+            hide-after-inactive-ms 2000
+        }
+
         ${lib.optionalString config.modules.desktop.ai-agent.enable ''
           // AI 工作区保留原名（当前就是主工作区），面板不再固定打开到这里
           workspace "AI" {}

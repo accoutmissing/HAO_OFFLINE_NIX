@@ -4,6 +4,16 @@
     inherit (myvars) username;
     homeDirectory = "/home/${myvars.username}";
     stateVersion = "26.05";
+
+    # 光标主题（niri 里用 cursor {} 指定同名主题）
+    pointerCursor = {
+      enable = true;
+      name = "Bibata-Modern-Ice";
+      package = pkgs.bibata-cursors;
+      size = 24;
+      gtk.enable = true;
+      x11.enable = true;
+    };
   };
 
   # 用户级包
