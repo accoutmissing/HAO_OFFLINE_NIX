@@ -25,6 +25,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # 终端 AI 编码 Agent（源码构建，HM/NixOS 模块）
+    oh-my-pi = {
+      url = "github:can1357/oh-my-pi";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # 格式化工具集
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";

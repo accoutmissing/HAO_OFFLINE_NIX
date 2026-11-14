@@ -1,5 +1,7 @@
-{ pkgs, myvars, ... }:
+{ pkgs, myvars, inputs, ... }:
 {
+  imports = [ inputs.oh-my-pi.homeManagerModules.default ];
+
   home = {
     inherit (myvars) username;
     homeDirectory = "/home/${myvars.username}";
@@ -30,6 +32,9 @@
     delta # git diff 高亮
     gh # GitHub CLI
   ];
+
+  # 终端 AI Agent（omp）
+  programs.omp.enable = true;
 
   # Git 配置
   programs.git = {

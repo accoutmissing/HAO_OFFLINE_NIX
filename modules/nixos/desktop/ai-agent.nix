@@ -1,12 +1,12 @@
-{ config, lib, pkgs, myvars, ... }:
+{ config, lib, pkgs, inputs, myvars, ... }:
 let
   inherit (lib) mkEnableOption mkIf removePrefix;
   cfg = config.modules.desktop.ai-agent;
 
   scriptBody = path: removePrefix "#!/usr/bin/env bash\n" (builtins.readFile path);
 
-  # omp 使用官方预编译二进制（见 pkgs/omp/default.nix），避免本地编译整套 Rust/bun
-  omp = pkgs.callPackage ../../../pkgs/omp { };
+  # omp 来自 oh-my-pi flake 的源码构建（flake.lock 固定版本）
+  omp = inputs.oh-my-pi.packages.${pkgs.stdenv.hostPlatform.system}.omp;
 
   haoAgent = pkgs.writeShellApplication {
     name = "hao-agent";

@@ -575,7 +575,7 @@ opencode auth login
 ```
 
 系统默认打开 Codex。运行 `ai-pick` 可以临时选择其他 Agent；运行 `hao-agent --set omp` 可以把 OMP 设为默认。登录凭据只保存在当前用户目录，不会进入公开仓库。
-OMP 使用官方预编译二进制，版本固定在 `pkgs/omp/default.nix`，不会自动更新。
+OMP 由 oh-my-pi flake 源码构建，版本由 `flake.lock` 固定，不会自动更新；升级用 `nix flake update oh-my-pi` 后重建。
 
 ### 更新系统
 

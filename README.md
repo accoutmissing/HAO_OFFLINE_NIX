@@ -169,7 +169,7 @@ opencode auth login
 ```
 
 登录凭据由各 CLI 保存在当前用户目录中，不会写入 Git 仓库或 Nix Store。Agent 仍保留正常的命令确认流程，不会默认获得免确认执行权限。
-`omp` 使用官方预编译二进制（版本固定在 `pkgs/omp/default.nix`，不会自我更新）；升级时改该文件的 `version` 和 `hash` 后重新构建即可。
+`omp` 由 oh-my-pi 的 flake 源码构建，版本由 `flake.lock` 固定且不会自我更新；升级执行 `nix flake update oh-my-pi` 后重建（升级时需要本地编译，耗时数十分钟）。
 `admin` 同时被授权进行免密远程系统调试；该账户及其 SSH 密钥应按 root 权限保护。
 
 ## 📚 相关链接
