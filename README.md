@@ -6,9 +6,9 @@
 
 | 类别 | 内容 |
 |------|------|
-| 🖥️ 主机 | HAO_OFFLINE（笔记本 i7-8750H + GTX 1060）/ HAO_DESKTOP（台式机 i5-13600KF + RTX 4070S）/ HAO_SERVER（服务器，独立分支） |
+| 🖥️ 主机 | HAO_OFFLINE（笔记本 i7-8750H + GTX 1060）/ HAO_DESKTOP（台式机 i5-13600KF + RTX 4070S）/ HAO_WSL（Windows WSL2） |
 | 🪟 桌面 | Niri（滚动平铺 Wayland）+ Noctalia 壳层（bar/dock/启动器/锁屏）+ ReGreet 图形登录 |
-| 💿 安装 | 中文全屏向导 + 按机型离线镜像 + 自动分区 + 失败重试 |
+| 💿 安装 | 中文全屏向导 + 按机型离线镜像 + 整盘分区；部分安装阶段可重试 |
 | 🔤 中文输入 | Fcitx5 + Rime |
 | 🎨 设计 | GIMP / Inkscape / Krita / Blender 全套 |
 | 🛠️ 开发 | Node.js / Python / pnpm / lazygit / Starship 提示符 |
@@ -18,8 +18,8 @@
 | 🖥️ Windows 应用 | KVM/QEMU Windows VM（virt-manager / quickemu，swtpm + OVMF） |
 | 🌐 网络 | EasyTier P2P 组网 + Clash Verge 代理 |
 | 🐳 容器 | Podman（docker 兼容）+ libvirtd KVM |
-| 🔒 安全 | SSH 禁密码 + root 锁定 + root-only 运行时 secrets（不进 Git / Nix store） |
-| 🔄 系统 | Btrfs + zstd 压缩 + zram + 每周自动 GC |
+| 🔒 安全 | SSH 禁密码、root 登录锁定、root-only 运行时 secrets；wheel 组拥有免密 sudo 和 Nix trusted-user 权限 |
+| 🔄 系统 | Btrfs + zstd 压缩 + zram；桌面主机按 store 容量清理旧系统代，WSL 单独配置 GC |
 | 🇨🇳 国内优化 | 清华/中科大镜像 + 超时优化 |
 | 🔧 CI | GitHub Actions：格式/脚本/求值等快速检查始终运行；安装器 VM 测试仅安装器相关改动触发 |
 
@@ -34,7 +34,7 @@
 | **HAO_OFFLINE** | 神舟战神 Z7-KP7Z | main | i7-8750H + GTX 1060，Optimus 按需调用 |
 | **HAO_DESKTOP** | 自组台式机 | main | i5-13600KF + RTX 4070S，独显常开 |
 | **HAO_WSL** | Windows WSL2 | main | Penpot + Hindsight 常驻（声明式容器/systemd）；uid 1500 规避 WSL 用户会话缺陷 |
-| **HAO_SERVER** | 家庭服务器 / VPS | —（独立维护，不在本仓库） | 无头服务器，fail2ban + 容器 + 自动更新 |
+| **HAO_SERVER** | 家庭服务器 / VPS | — | 独立维护，不属于本仓库的 Flake 输出 |
 
 ### HAO_WSL Penpot 首次部署与密钥轮换
 
@@ -69,11 +69,13 @@ sudo nixos-rebuild switch --flake .#HAO_WSL
 
 ### HAO 安装向导
 
-新版镜像启动后进入中文全屏界面，方向键选择、回车继续。确认机型、硬盘和密码后，向导会先准备完整系统，再清盘并安装；下载或安装失败可重试当前步骤。
+镜像正常启动图形会话后进入中文全屏界面，方向键选择、回车继续。确认机型、硬盘和密码后，向导会先准备完整系统，再清盘并安装；下载与系统安装阶段可重试，分区阶段不会自动重复执行。
 
-国内安装建议使用匹配机型的离线版，安装现场无需联网下载系统；联网版会自动选择可达的国内缓存，并保留官方后备源。图形界面启动失败时自动退回英文文字模式。
+国内安装建议使用匹配机型的离线版，安装现场无需联网下载系统；联网版会探测候选缓存并选择可达的源，包括官方缓存。图形界面启动失败时自动退回英文文字模式。
 
-本分支包含这些改进；v1.2.7 已发布镜像仍是此前的英文联网版，新功能需使用更新后的构建产物。镜像选择、分卷合并和 U 盘写入见[五步安装说明](./INSTALL_GUIDE.md#推荐五步完成安装)。
+仓库中的安装器代码与已有 Release 镜像可能对应不同提交；使用前应核对镜像类型、构建提交和 SHA-256。镜像选择、分卷合并和 U 盘写入见[五步安装说明](./INSTALL_GUIDE.md#推荐五步完成安装)。
+
+**安装验证状态：**曾在笔记本上遇到 Ventoy 介质识别和 EFI 分区挂载问题；实际机器上的恢复与启动验证不等于当前源码或新镜像已通过完整安装回归。尤其是旧文件系统签名及重复分区标签场景，安装前应核对安装器的修复和验证状态，勿将构建成功或 CI 通过视为实机安装通过。
 
 当前版本只支持 **UEFI 整盘安装**，所选磁盘会被完全清空；双系统继续使用
 [安装指南](./INSTALL_GUIDE.md) 中的高级手动流程。需要从源码构建 ISO 时运行：
@@ -93,8 +95,11 @@ nix flake show
 # 验证配置能解析，并确保 flake.lock 没有漏项
 nix flake check --no-write-lock-file
 
-# 首次使用 / 升级依赖后：生成或更新 flake.lock 并提交（保证可复现）
+# 首次使用：补齐 flake.lock 中缺失的锁定项
 nix flake lock
+# 需要更新已有依赖时再使用 nix flake update
+git diff -- flake.lock
+# 仅在存在预期的锁文件更改时提交
 git add flake.lock && git commit -m "chore: update flake.lock"
 
 # 更新系统（先确认 /var/lib/hao-secrets/admin-password-hash 已安装）
@@ -103,21 +108,21 @@ sudo nixos-rebuild switch --flake .#HAO_DESKTOP
 # 回滚到上一个版本
 sudo nixos-rebuild switch --rollback
 
-# 清理旧版本
+# 手动清理 7 天前的旧代及不可达路径；可能减少可回滚代数
 sudo nix-collect-garbage --delete-older-than 7d
-# 系统代按容量自动清理：/nix/store ≤ 50 GiB 时全部保留，超过才从最旧代删起
+# 桌面主机按容量检查旧系统代：目标为 50 GiB，保留回滚代可能仍超出
 systemctl status nixos-generation-prune.timer
 ```
 
 ## 🧪 开发与 CI
 
-改完配置后，本地验证优先于 CI：
+在可写的仓库工作副本中修改并验证配置；下面以 `/etc/nixos` 为例，`nix fmt` 需要对工作副本有写权限：
 
 ```bash
 cd /etc/nixos
-sudo nix fmt       # treefmt：nixpkgs-fmt / deadnix / statix / shellcheck / shfmt
-sudo nix flake check   # 完整检查（本机有 KVM，比共享 runner 稳定）
-sudo nixos-rebuild build --flake .#HAO_OFFLINE  # 真实构建，确认可切换
+nix fmt       # treefmt：nixpkgs-fmt / deadnix / statix / shellcheck / shfmt
+nix flake check   # 完整检查，包含安装器 VM 测试
+nixos-rebuild build --flake .#HAO_OFFLINE  # 构建配置，不切换系统
 ```
 
 CI 分三层，避免基础设施抖动阻塞日常改动：
@@ -138,7 +143,7 @@ sudo nixos-rebuild switch --flake path:/etc/nixos#HAO_OFFLINE
 
 CI 使用 git 检出，天然不包含 `local.nix`，这就是“特例不进仓库”的保证。
 
-CI 不是权威判据：VM 测试在无 KVM 的共享 runner 上依赖 QEMU 时序，偶发被 `SIGKILL`。看到红灯先看失败步骤——`formatting` 或求值失败必须修，`installer-vm` 的偶发失败可以重跑。最终以本机能 `nixos-rebuild build/switch`、正常运行且可回滚为准。
+看到 CI 失败应先看具体步骤和日志；安装器 VM 测试曾出现进程被 `SIGKILL` 的情况，原因不一定是代码错误，也不能仅凭红灯断定是资源不足。重跑可帮助定位，但不能替代对失败原因的分析。CI、构建、实际切换与安装是不同验证阶段，应分别记录结果。
 
 ## 🎮 游戏与 Windows VM
 
@@ -157,8 +162,8 @@ CI 不是权威判据：VM 测试在无 KVM 的共享 runner 上依赖 QEMU 时�
 
 - 按 `Win + Shift + Ctrl + A` 呼出或隐藏顶部浮动的 Agent 窗口；再次打开会保留之前的会话。
 - 按 `Win + 空格` 搜索 **HAO AI** 也可以启动。
-- 默认使用 Codex；运行 `ai-pick` 可临时选择 Codex、OpenCode 或 OMP。
-- 运行 `hao-agent --set opencode` 可修改默认 Agent，支持值为 `codex`、`opencode`、`omp`。
+- 无已保存的有效选择时默认使用 OpenCode；运行 `ai-pick` 可临时选择 Codex、OpenCode 或 OMP。
+- 运行 `hao-agent --current` 查看当前选择，或运行 `hao-agent --set omp` 修改默认 Agent；支持值为 `codex`、`opencode`、`omp`。
 
 第一次使用某个 Agent 时，在终端完成它自己的登录：
 
@@ -168,9 +173,10 @@ omp   # 启动后输入 /login 登录
 opencode auth login
 ```
 
-登录凭据由各 CLI 保存在当前用户目录中，不会写入 Git 仓库或 Nix Store。Agent 仍保留正常的命令确认流程，不会默认获得免确认执行权限。
-`omp` 由 oh-my-pi 的 flake 源码构建，版本由 `flake.lock` 固定且不会自我更新；升级执行 `nix flake update oh-my-pi` 后重建（升级时需要本地编译，耗时数十分钟）。
-`admin` 同时被授权进行免密远程系统调试；该账户及其 SSH 密钥应按 root 权限保护。
+各 CLI 的登录与命令确认行为取决于其版本及用户配置；请勿将凭据提交到仓库或写入 Nix 表达式。权限提示不能替代系统隔离。
+`omp` 由 oh-my-pi 的 Flake 源码构建，输入由 `flake.lock` 固定；项目还启用了上游 Home Manager 模块。需要更新时执行 `nix flake update oh-my-pi`，检查锁文件与变更后重新构建；源码构建可能耗时较长。
+
+当前配置允许 wheel 组免密 sudo，且将 `@wheel` 列为 Nix trusted-users；以该组用户身份运行的 Agent 可能获得系统级权限。`admin` 账户及其 SSH 密钥应按 root 权限保护，运行前请检查各 Agent 的权限设置。
 
 ## 📚 相关链接
 
